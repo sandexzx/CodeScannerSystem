@@ -32,6 +32,18 @@ class ScannerFileHandler(FileSystemEventHandler):
             with open(SCANNER_FILE_PATH, 'w') as f:
                 pass
 
+    def play_sound(self, sound):
+        """Safely play a sound with proper cleanup"""
+        try:
+            # Stop any currently playing sounds
+            pygame.mixer.stop()
+            # Play the new sound
+            sound.play()
+            # Wait a short moment to ensure sound starts playing
+            time.sleep(0.1)
+        except Exception as e:
+            logging.error(f"Error playing sound: {str(e)}")
+
     def process_code(self, code):
         """Process a single scanned code"""
         code = code.strip()
@@ -44,19 +56,20 @@ class ScannerFileHandler(FileSystemEventHandler):
         # Check for duplicates
         if code in self.processed_codes:
             logging.warning(f"Duplicate code detected: {code}")
-            self.sound_error.play()
+            self.play_sound(self.sound_error)
             return False
             
         # Add code to current box
         self.current_box.append(code)
         self.processed_codes.add(code)
-        self.sound_success.play()
+        self.play_sound(self.sound_success)
         
-        logging.info(f"Code added to box {self.box_number}: {code}")
+        element_number = len(self.current_box)
+        logging.info(f"Code added to box {self.box_number} (element {element_number}/{BOX_CAPACITY}): {code}")
         
         # Check if box is full
         if len(self.current_box) >= BOX_CAPACITY:
-            self.sound_box_full.play()
+            self.play_sound(self.sound_box_full)
             logging.info(f"Box {self.box_number} is full!")
             self.create_new_box()
             
@@ -98,29 +111,39 @@ class ScannerFileHandler(FileSystemEventHandler):
     def on_modified(self, event):
         if event.src_path == os.path.abspath(SCANNER_FILE_PATH):
             try:
+                # Читаем содержимое файла
                 with open(SCANNER_FILE_PATH, 'r') as f:
-                    # Read all lines and process them
-                    lines = f.readlines()
-                    for line in lines:
-                        if FILE_FORMAT == "csv":
-                            codes = line.strip().split(',')
-                            for code in codes:
-                                self.process_code(code)
-                        else:  # single_line
-                            self.process_code(line)
+                    content = f.read().strip()
+                    
+                # Если файл пустой, пропускаем обработку
+                if not content:
+                    return
+                    
+                # Обрабатываем содержимое
+                if FILE_FORMAT == "csv":
+                    codes = content.split(',')
+                    for code in codes:
+                        if code.strip():  # Проверяем, что код не пустой
+                            self.process_code(code)
+                else:  # single_line
+                    codes = content.split('\n')
+                    for code in codes:
+                        if code.strip():  # Проверяем, что код не пустой
+                            self.process_code(code)
                             
-                # Clear the file after processing
+                # Очищаем файл только после успешной обработки
                 with open(SCANNER_FILE_PATH, 'w') as f:
                     pass
                     
             except Exception as e:
                 logging.error(f"Error processing file: {str(e)}")
+                # В случае ошибки не очищаем файл, чтобы не потерять данные
 
 def start_monitoring():
     """Start monitoring the scanner file"""
     event_handler = ScannerFileHandler()
     observer = Observer()
-    observer.schedule(event_handler, path=os.path.dirname(SCANNER_FILE_PATH), recursive=False)
+    observer.schedule(event_handler, path=os.path.dirname(os.path.abspath(SCANNER_FILE_PATH)), recursive=False)
     observer.start()
     
     logging.info(f"Started monitoring {SCANNER_FILE_PATH}")
