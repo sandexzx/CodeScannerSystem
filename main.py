@@ -9,10 +9,11 @@ def clear_screen():
 def print_menu():
     print("\n=== Система учета товаров с отслеживанием файла данных сканера ===")
     print("1. Начать мониторинг файла сканера")
-    print("2. Показать текущие настройки")
-    print("3. Изменить путь к файлу сканера")
-    print("4. Изменить формат файла")
-    print("5. Выход")
+    print("2. Начать новую сессию сканирования")
+    print("3. Показать текущие настройки")
+    print("4. Изменить путь к файлу сканера")
+    print("5. Изменить формат файла")
+    print("6. Выход")
     print("================================================================")
 
 def show_settings():
@@ -53,7 +54,7 @@ def main():
         clear_screen()
         print_menu()
         
-        choice = input("\nВыберите действие (1-5): ").strip()
+        choice = input("\nВыберите действие (1-6): ").strip()
         
         if choice == "1":
             clear_screen()
@@ -61,12 +62,17 @@ def main():
             print("Для остановки нажмите Ctrl+C")
             start_monitoring()
         elif choice == "2":
-            show_settings()
+            clear_screen()
+            print("Запуск новой сессии сканирования...")
+            print("Для остановки нажмите Ctrl+C")
+            start_monitoring(start_new_session=True)
         elif choice == "3":
-            change_scanner_file()
+            show_settings()
         elif choice == "4":
-            change_file_format()
+            change_scanner_file()
         elif choice == "5":
+            change_file_format()
+        elif choice == "6":
             print("\nЗавершение работы программы...")
             sys.exit(0)
         else:

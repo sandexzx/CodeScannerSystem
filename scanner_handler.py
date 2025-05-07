@@ -1,5 +1,8 @@
 import time
 import logging
+import glob
+import re
+import json
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import pygame
@@ -16,7 +19,7 @@ logging.basicConfig(
 )
 
 class ScannerFileHandler(FileSystemEventHandler):
-    def __init__(self):
+    def __init__(self, start_new_session=False):
         self.current_box = []
         self.box_number = 1
         self.processed_codes = set()
@@ -32,45 +35,103 @@ class ScannerFileHandler(FileSystemEventHandler):
             with open(SCANNER_FILE_PATH, 'w') as f:
                 pass
 
-        # Load existing data from JSON and restore state
-        self.load_existing_data()
+        # Initialize JSON file handling
+        self.json_base_name = EXPORT_FILE.replace('.xlsx', '')
+        if start_new_session:
+            self.create_new_session()
+        else:
+            self.load_existing_data()
+
+    def get_latest_json_file(self):
+        """Find the latest version of the JSON file"""
+        pattern = f"{self.json_base_name}_*.json"
+        files = glob.glob(pattern)
+        
+        if not files:
+            # If no versioned files exist, check for the base file
+            base_file = f"{self.json_base_name}.json"
+            if os.path.exists(base_file):
+                return base_file
+            return None
+            
+        # Extract version numbers and find the latest
+        versions = []
+        for file in files:
+            match = re.search(r'_(\d+)\.json$', file)
+            if match:
+                versions.append((int(match.group(1)), file))
+        
+        if not versions:
+            return None
+            
+        # Return the file with the highest version number
+        return max(versions, key=lambda x: x[0])[1]
+
+    def get_next_version_number(self):
+        """Get the next version number for a new session"""
+        latest_file = self.get_latest_json_file()
+        if not latest_file:
+            return 1
+            
+        match = re.search(r'_(\d+)\.json$', latest_file)
+        if match:
+            return int(match.group(1)) + 1
+        return 1
+
+    def create_new_session(self):
+        """Create a new scanning session with a new JSON file"""
+        next_version = self.get_next_version_number()
+        self.current_json_file = f"{self.json_base_name}_{next_version}.json"
+        
+        # Initialize new JSON file with empty array
+        with open(self.current_json_file, 'w') as f:
+            json.dump([], f, indent=4)
+            
+        # Reset state
+        self.current_box = []
+        self.box_number = 1
+        self.processed_codes = set()
+        
+        logging.info(f"Started new session with file: {self.current_json_file}")
 
     def load_existing_data(self):
-        """Load existing data from JSON file and restore state"""
+        """Load existing data from the latest JSON file and restore state"""
         import json
-        json_file = EXPORT_FILE.replace('.xlsx', '.json')
         
+        self.current_json_file = self.get_latest_json_file()
+        if not self.current_json_file:
+            # If no existing file found, create a new session
+            self.create_new_session()
+            return
+            
         try:
-            if os.path.exists(json_file):
-                with open(json_file, 'r') as f:
-                    existing_data = json.load(f)
+            with open(self.current_json_file, 'r') as f:
+                existing_data = json.load(f)
+                
+            if existing_data:
+                # Get the last box number
+                self.box_number = max(entry['Box Number'] for entry in existing_data)
+                
+                # Add all existing codes to processed_codes set
+                self.processed_codes.update(entry['Code'] for entry in existing_data)
+                
+                # Get codes from the last box
+                last_box_codes = [entry['Code'] for entry in existing_data 
+                                if entry['Box Number'] == self.box_number]
+                
+                # If the last box wasn't full, restore it
+                if len(last_box_codes) < BOX_CAPACITY:
+                    self.current_box = last_box_codes
+                else:
+                    # If the last box was full, start a new one
+                    self.current_box = []
+                    self.box_number += 1
                     
-                if existing_data:
-                    # Get the last box number
-                    self.box_number = max(entry['Box Number'] for entry in existing_data)
-                    
-                    # Add all existing codes to processed_codes set
-                    self.processed_codes.update(entry['Code'] for entry in existing_data)
-                    
-                    # Get codes from the last box
-                    last_box_codes = [entry['Code'] for entry in existing_data 
-                                    if entry['Box Number'] == self.box_number]
-                    
-                    # If the last box wasn't full, restore it
-                    if len(last_box_codes) < BOX_CAPACITY:
-                        self.current_box = last_box_codes
-                    else:
-                        # If the last box was full, start a new one
-                        self.current_box = []
-                        self.box_number += 1
-                        
-                logging.info(f"Restored state: Box {self.box_number}, {len(self.processed_codes)} processed codes")
+            logging.info(f"Restored state from {self.current_json_file}: Box {self.box_number}, {len(self.processed_codes)} processed codes")
         except Exception as e:
             logging.error(f"Error loading existing data: {str(e)}")
-            # If there's an error, start fresh
-            self.current_box = []
-            self.box_number = 1
-            self.processed_codes = set()
+            # If there's an error, create a new session
+            self.create_new_session()
 
     def play_sound(self, sound):
         """Safely play a sound with proper cleanup"""
@@ -123,9 +184,8 @@ class ScannerFileHandler(FileSystemEventHandler):
         import json
         from datetime import datetime
         
-        json_file = EXPORT_FILE.replace('.xlsx', '.json')
         try:
-            with open(json_file, 'r') as f:
+            with open(self.current_json_file, 'r') as f:
                 existing_data = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
             existing_data = []
@@ -139,9 +199,9 @@ class ScannerFileHandler(FileSystemEventHandler):
         
         existing_data.append(new_entry)
         
-        with open(json_file, 'w') as f:
+        with open(self.current_json_file, 'w') as f:
             json.dump(existing_data, f, indent=4)
-        logging.info(f"Code {code} saved to {json_file}")
+        logging.info(f"Code {code} saved to {self.current_json_file}")
 
     def create_new_box(self):
         """Create a new box and save the current one"""
@@ -207,9 +267,9 @@ class ScannerFileHandler(FileSystemEventHandler):
                 logging.error(f"Error processing file: {str(e)}")
                 # В случае ошибки не очищаем файл, чтобы не потерять данные
 
-def start_monitoring():
+def start_monitoring(start_new_session=False):
     """Start monitoring the scanner file"""
-    event_handler = ScannerFileHandler()
+    event_handler = ScannerFileHandler(start_new_session=start_new_session)
     observer = Observer()
     observer.schedule(event_handler, path=os.path.dirname(os.path.abspath(SCANNER_FILE_PATH)), recursive=False)
     observer.start()
