@@ -32,6 +32,46 @@ class ScannerFileHandler(FileSystemEventHandler):
             with open(SCANNER_FILE_PATH, 'w') as f:
                 pass
 
+        # Load existing data from JSON and restore state
+        self.load_existing_data()
+
+    def load_existing_data(self):
+        """Load existing data from JSON file and restore state"""
+        import json
+        json_file = EXPORT_FILE.replace('.xlsx', '.json')
+        
+        try:
+            if os.path.exists(json_file):
+                with open(json_file, 'r') as f:
+                    existing_data = json.load(f)
+                    
+                if existing_data:
+                    # Get the last box number
+                    self.box_number = max(entry['Box Number'] for entry in existing_data)
+                    
+                    # Add all existing codes to processed_codes set
+                    self.processed_codes.update(entry['Code'] for entry in existing_data)
+                    
+                    # Get codes from the last box
+                    last_box_codes = [entry['Code'] for entry in existing_data 
+                                    if entry['Box Number'] == self.box_number]
+                    
+                    # If the last box wasn't full, restore it
+                    if len(last_box_codes) < BOX_CAPACITY:
+                        self.current_box = last_box_codes
+                    else:
+                        # If the last box was full, start a new one
+                        self.current_box = []
+                        self.box_number += 1
+                        
+                logging.info(f"Restored state: Box {self.box_number}, {len(self.processed_codes)} processed codes")
+        except Exception as e:
+            logging.error(f"Error loading existing data: {str(e)}")
+            # If there's an error, start fresh
+            self.current_box = []
+            self.box_number = 1
+            self.processed_codes = set()
+
     def play_sound(self, sound):
         """Safely play a sound with proper cleanup"""
         try:
