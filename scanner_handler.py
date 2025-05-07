@@ -67,6 +67,9 @@ class ScannerFileHandler(FileSystemEventHandler):
         element_number = len(self.current_box)
         logging.info(f"Code added to box {self.box_number} (element {element_number}/{BOX_CAPACITY}): {code}")
         
+        # Save to JSON after each scan
+        self.save_json_data(code)
+        
         # Check if box is full
         if len(self.current_box) >= BOX_CAPACITY:
             self.play_sound(self.sound_box_full)
@@ -74,6 +77,31 @@ class ScannerFileHandler(FileSystemEventHandler):
             self.create_new_box()
             
         return True
+
+    def save_json_data(self, code):
+        """Save single code data to JSON file"""
+        import json
+        from datetime import datetime
+        
+        json_file = EXPORT_FILE.replace('.xlsx', '.json')
+        try:
+            with open(json_file, 'r') as f:
+                existing_data = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            existing_data = []
+            
+        # Create new entry
+        new_entry = {
+            'Box Number': self.box_number,
+            'Code': code,
+            'Timestamp': datetime.now().isoformat()
+        }
+        
+        existing_data.append(new_entry)
+        
+        with open(json_file, 'w') as f:
+            json.dump(existing_data, f, indent=4)
+        logging.info(f"Code {code} saved to {json_file}")
 
     def create_new_box(self):
         """Create a new box and save the current one"""
@@ -98,7 +126,7 @@ class ScannerFileHandler(FileSystemEventHandler):
         
         df = pd.DataFrame(data)
         
-        # Append to existing file or create new
+        # Save to Excel
         try:
             existing_df = pd.read_excel(EXPORT_FILE)
             df = pd.concat([existing_df, df], ignore_index=True)
