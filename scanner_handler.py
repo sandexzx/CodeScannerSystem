@@ -106,6 +106,10 @@ class ScannerHandler:
 
     def create_new_session(self):
         """Create a new scanning session with new JSON and Excel files"""
+        # Create necessary directories if they don't exist
+        os.makedirs(os.path.dirname(self.json_base_name), exist_ok=True)
+        os.makedirs(self.excel_dir, exist_ok=True)
+        
         next_version = self.get_next_version_number()
         self.current_json_file = f"{self.json_base_name}_{next_version}.json"
         
