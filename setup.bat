@@ -24,7 +24,7 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 
 echo Verifying installation...
-python -c "import pandas; import pygame; import watchdog; import openpyxl" 2>nul
+python -c "import pandas; import pygame" 2>nul
 if errorlevel 1 (
     echo Error: Some dependencies failed to install
     pause
