@@ -8,7 +8,8 @@ DEFAULT_CONFIG = {
     "sound_success": "sounds/success.wav",
     "sound_error": "sounds/error.wav",
     "sound_box_full": "sounds/box_full.wav",
-    "export_file": "export/boxes.xlsx"
+    "export_file": "export/EXCEL/boxes.xlsx",
+    "json_export_dir": "export/JSON"
 }
 
 CONFIG_FILE = "config.json"
@@ -43,7 +44,9 @@ SOUND_SUCCESS = config["sound_success"]
 SOUND_ERROR = config["sound_error"]
 SOUND_BOX_FULL = config["sound_box_full"]
 EXPORT_FILE = config["export_file"]
+JSON_EXPORT_DIR = config["json_export_dir"]
 
 # Create necessary directories
 os.makedirs("sounds", exist_ok=True)
-os.makedirs("export", exist_ok=True) 
+os.makedirs("export/EXCEL", exist_ok=True)
+os.makedirs("export/JSON", exist_ok=True) 

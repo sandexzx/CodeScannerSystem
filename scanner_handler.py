@@ -5,7 +5,7 @@ import re
 import json
 import os
 import pygame
-from config_manager import load_config, SCANNER_FILE_PATH, FILE_FORMAT, SOUND_SUCCESS, SOUND_ERROR, SOUND_BOX_FULL, EXPORT_FILE
+from config_manager import load_config, SCANNER_FILE_PATH, FILE_FORMAT, SOUND_SUCCESS, SOUND_ERROR, SOUND_BOX_FULL, EXPORT_FILE, JSON_EXPORT_DIR
 
 # Configure logging
 logging.basicConfig(
@@ -30,7 +30,7 @@ class ScannerHandler:
         self.sound_box_full = pygame.mixer.Sound(SOUND_BOX_FULL)
         
         # Initialize JSON file handling
-        self.json_base_name = EXPORT_FILE.replace('.xlsx', '')
+        self.json_base_name = os.path.join(JSON_EXPORT_DIR, EXPORT_FILE.split('/')[-1].replace('.xlsx', ''))
         if start_new_session:
             self.create_new_session()
         else:
@@ -167,8 +167,9 @@ class ScannerHandler:
         element_number = len(self.current_box)
         logging.info(f"Code added to box {self.box_number} (element {element_number}/{box_capacity}): {code}")
         
-        # Save to JSON after each scan
+        # Save to JSON and Excel after each scan
         self.save_json_data(code)
+        self.save_box_data()
         
         # Check if box is full
         if len(self.current_box) >= box_capacity:
@@ -202,16 +203,6 @@ class ScannerHandler:
             json.dump(existing_data, f, indent=4)
         logging.info(f"Code {code} saved to {self.current_json_file}")
 
-    def create_new_box(self):
-        """Create a new box and save the current one"""
-        if self.current_box:
-            # Save current box data
-            self.save_box_data()
-            # Create new box
-            self.current_box = []
-            self.box_number += 1
-            logging.info(f"Created new box {self.box_number}")
-
     def save_box_data(self):
         """Save box data to Excel file"""
         import pandas as pd
@@ -228,6 +219,8 @@ class ScannerHandler:
         # Save to Excel
         try:
             existing_df = pd.read_excel(EXPORT_FILE)
+            # Remove entries for current box if they exist
+            existing_df = existing_df[existing_df['Box Number'] != self.box_number]
             df = pd.concat([existing_df, df], ignore_index=True)
         except FileNotFoundError:
             pass
@@ -235,10 +228,19 @@ class ScannerHandler:
         df.to_excel(EXPORT_FILE, index=False)
         logging.info(f"Box {self.box_number} data saved to {EXPORT_FILE}")
 
+    def create_new_box(self):
+        """Create a new box and save the current one"""
+        if self.current_box:
+            # Create new box
+            self.current_box = []
+            self.box_number += 1
+            logging.info(f"Created new box {self.box_number}")
+
     def start_monitoring(self):
         """Start monitoring for scanner input"""
         print("\n=== Сканер запущен! ===")
         print("Вводите коды (для выхода введите 'exit' или нажмите Ctrl+C)")
+        print("Для принудительного закрытия коробки введите 'box'")
         print("================================================")
         
         try:
@@ -248,6 +250,16 @@ class ScannerHandler:
                 if code.lower() == 'exit':
                     print("\nЗавершение работы сканера...")
                     break
+                    
+                if code.lower() == 'box':
+                    if self.current_box:
+                        print(f"\nПринудительное закрытие коробки {self.box_number}...")
+                        self.play_sound(self.sound_box_full)
+                        self.create_new_box()
+                        print(f"Создана новая коробка {self.box_number}")
+                    else:
+                        print("\nТекущая коробка пуста!")
+                    continue
                     
                 if code:
                     self.process_code(code)
