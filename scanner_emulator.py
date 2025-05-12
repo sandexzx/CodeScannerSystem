@@ -6,48 +6,27 @@ from datetime import datetime
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
 
-def select_file_format():
-    while True:
-        clear_screen()
-        print("\n=== Эмулятор сканера штрих-кодов ===")
-        print("Выберите формат файла:")
-        print("1. Одна строка - один код")
-        print("2. CSV (коды через запятую)")
-        choice = input("\nВаш выбор (1/2): ").strip()
-        
-        if choice == "1":
-            return "single_line"
-        elif choice == "2":
-            return "csv"
-        else:
-            print("\nНеверный выбор! Попробуйте снова.")
-            time.sleep(1)
-
 def get_output_file():
+    # По умолчанию используем scanner_data.txt в текущей директории
+    default_file = "scanner_data.txt"
+    
     while True:
-        file_path = input("\nВведите путь к файлу для сохранения кодов: ").strip()
-        if file_path:
-            # Если путь не содержит директорий, создаем файл в текущей директории
-            if os.path.dirname(file_path):
-                os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            # Создаем пустой файл, если он не существует
-            with open(file_path, 'a') as f:
-                pass
-            return file_path
-        print("Путь не может быть пустым!")
-
-def write_code(file_path, code, file_format, codes_buffer=None):
-    try:
-        if file_format == "single_line":
-            with open(file_path, 'a') as f:
-                f.write(f"{code}\n")
-        else:  # csv format
-            if codes_buffer is None:
-                codes_buffer = []
-            codes_buffer.append(code)
+        file_path = input(f"\nВведите путь к файлу для сохранения кодов (Enter для {default_file}): ").strip()
+        if not file_path:
+            file_path = default_file
             
-            with open(file_path, 'w') as f:
-                f.write(','.join(codes_buffer))
+        # Если путь не содержит директорий, создаем файл в текущей директории
+        if os.path.dirname(file_path):
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        # Создаем пустой файл, если он не существует
+        with open(file_path, 'a') as f:
+            pass
+        return file_path
+
+def write_code(file_path, code, codes_buffer=None):
+    try:
+        with open(file_path, 'a') as f:
+            f.write(f"{code}\n")
         
         print(f"\nКод {code} успешно записан в файл")
         return codes_buffer
@@ -59,18 +38,12 @@ def main():
     clear_screen()
     print("=== Эмулятор сканера штрих-кодов ===")
     
-    # Выбор формата файла
-    file_format = select_file_format()
-    
     # Получение пути к файлу
     file_path = get_output_file()
     
-    # Буфер для CSV формата
-    codes_buffer = [] if file_format == "csv" else None
-    
     clear_screen()
     print(f"\nЭмулятор запущен!")
-    print(f"Формат файла: {'Одна строка - один код' if file_format == 'single_line' else 'CSV'}")
+    print(f"Формат файла: Одна строка - один код")
     print(f"Файл для записи: {file_path}")
     print("\nВводите коды (для выхода введите 'exit' или нажмите Ctrl+C)")
     print("================================================")
@@ -84,7 +57,7 @@ def main():
                 break
                 
             if code:
-                codes_buffer = write_code(file_path, code, file_format, codes_buffer)
+                write_code(file_path, code)
             else:
                 print("Код не может быть пустым!")
                 
