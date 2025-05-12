@@ -2,69 +2,86 @@ import os
 import sys
 from scanner_handler import ScannerHandler
 from config_manager import load_config, save_config, SCANNER_FILE_PATH
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.prompt import Prompt, Confirm
+from rich import print as rprint
+from rich.progress import Progress, SpinnerColumn, TextColumn
+
+console = Console()
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
 
 def print_menu():
-    print("\n=== Система учета товаров с отслеживанием файла данных сканера ===")
-    print("1. Начать новую сессию сканирования")
-    print("2. Продолжить существующую сессию")
-    print("3. Показать текущие настройки")
-    print("4. Изменить путь к файлу сканера")
-    print("5. Изменить вместимость коробки")
-    print("6. Выход")
-    print("================================================================")
+    console.print(Panel.fit(
+        "[bold blue]Система учета товаров с отслеживанием файла данных сканера[/bold blue]",
+        border_style="blue"
+    ))
+    
+    table = Table(show_header=False, box=None)
+    table.add_row("1", "Начать новую сессию сканирования")
+    table.add_row("2", "Продолжить существующую сессию")
+    table.add_row("3", "Показать текущие настройки")
+    table.add_row("4", "Изменить путь к файлу сканера")
+    table.add_row("5", "Изменить вместимость коробки")
+    table.add_row("6", "Выход")
+    
+    console.print(table)
 
 def show_settings():
     config = load_config()
-    print("\nТекущие настройки:")
-    print(f"Путь к файлу сканера: {config['scanner_file_path']}")
-    print(f"Вместимость коробки: {config['box_capacity']} единиц")
-    input("\nНажмите Enter для продолжения...")
+    table = Table(title="Текущие настройки", show_header=True, header_style="bold magenta")
+    table.add_column("Параметр", style="cyan")
+    table.add_column("Значение", style="green")
+    
+    table.add_row("Путь к файлу сканера", config['scanner_file_path'])
+    table.add_row("Вместимость коробки", str(config['box_capacity']))
+    
+    console.print(table)
+    Prompt.ask("\nНажмите Enter для продолжения")
 
 def change_scanner_file():
     config = load_config()
-    new_path = input("\nВведите новый путь к файлу сканера: ").strip()
+    new_path = Prompt.ask("\nВведите новый путь к файлу сканера")
     if new_path:
         config["scanner_file_path"] = new_path
         save_config(config)
-        print(f"Путь к файлу сканера изменен на: {new_path}")
-    input("\nНажмите Enter для продолжения...")
+        console.print(f"[green]Путь к файлу сканера изменен на:[/green] {new_path}")
+    Prompt.ask("\nНажмите Enter для продолжения")
 
 def change_box_capacity():
     config = load_config()
     while True:
         try:
-            new_capacity = int(input("\nВведите новую вместимость коробки: ").strip())
+            new_capacity = int(Prompt.ask("\nВведите новую вместимость коробки"))
             if new_capacity > 0:
                 config["box_capacity"] = new_capacity
                 save_config(config)
-                print(f"Вместимость коробки изменена на: {new_capacity}")
+                console.print(f"[green]Вместимость коробки изменена на:[/green] {new_capacity}")
                 break
             else:
-                print("Вместимость должна быть положительным числом!")
+                console.print("[red]Вместимость должна быть положительным числом![/red]")
         except ValueError:
-            print("Пожалуйста, введите корректное число!")
-    input("\nНажмите Enter для продолжения...")
+            console.print("[red]Пожалуйста, введите корректное число![/red]")
+    Prompt.ask("\nНажмите Enter для продолжения")
 
 def main():
     while True:
         clear_screen()
         print_menu()
         
-        choice = input("\nВыберите действие (1-6): ").strip()
+        choice = Prompt.ask("\nВыберите действие", choices=["1", "2", "3", "4", "5", "6"])
         
         if choice == "1":
             clear_screen()
-            print("Запуск новой сессии сканирования...")
-            print("Для остановки нажмите Ctrl+C")
+            console.print("[bold blue]Запуск новой сессии сканирования...[/bold blue]")
             handler = ScannerHandler(start_new_session=True)
             handler.start_monitoring()
         elif choice == "2":
             clear_screen()
-            print("Продолжение существующей сессии...")
-            print("Для остановки нажмите Ctrl+C")
+            console.print("[bold blue]Продолжение существующей сессии...[/bold blue]")
             handler = ScannerHandler(start_new_session=False)
             handler.start_monitoring()
         elif choice == "3":
@@ -74,11 +91,12 @@ def main():
         elif choice == "5":
             change_box_capacity()
         elif choice == "6":
-            print("\nЗавершение работы программы...")
-            sys.exit(0)
+            if Confirm.ask("\nВы уверены, что хотите выйти?"):
+                console.print("\n[yellow]Завершение работы программы...[/yellow]")
+                sys.exit(0)
         else:
-            print("\nНеверный выбор! Попробуйте снова.")
-            input("Нажмите Enter для продолжения...")
+            console.print("\n[red]Неверный выбор! Попробуйте снова.[/red]")
+            Prompt.ask("Нажмите Enter для продолжения")
 
 if __name__ == "__main__":
     main() 

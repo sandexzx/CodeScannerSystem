@@ -6,16 +6,24 @@ import json
 import os
 import pygame
 from config_manager import load_config, SCANNER_FILE_PATH, SOUND_SUCCESS, SOUND_ERROR, SOUND_BOX_FULL, EXPORT_FILE, JSON_EXPORT_DIR, SESSION_BASE_NAME
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.logging import RichHandler
+from rich import print as rprint
+from datetime import datetime
+from rich.prompt import Prompt
 
-# Configure logging
+# Configure logging with Rich
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('scanner.log'),
-        logging.StreamHandler()
-    ]
+    format="%(message)s",
+    datefmt="[%X]",
+    handlers=[RichHandler(rich_tracebacks=True)]
 )
+
+console = Console()
 
 class ScannerHandler:
     def __init__(self, start_new_session=False):
@@ -187,12 +195,12 @@ class ScannerHandler:
         
         # Validate code (basic validation - can be extended)
         if not code or len(code) < 3:
-            logging.warning(f"Invalid code format: {code}")
+            console.print(f"[red]Неверный формат кода: {code}[/red]")
             return False
             
         # Check for duplicates
         if code in self.processed_codes:
-            logging.warning(f"Duplicate code detected: {code}")
+            console.print(f"[yellow]Обнаружен дубликат кода: {code}[/yellow]")
             self.play_sound(self.sound_error)
             return False
             
@@ -202,7 +210,7 @@ class ScannerHandler:
         self.play_sound(self.sound_success)
         
         element_number = len(self.current_box)
-        logging.info(f"Code added to box {self.box_number} (element {element_number}/{box_capacity}): {code}")
+        console.print(f"[green]Код добавлен в коробку {self.box_number} (элемент {element_number}/{box_capacity}): {code}[/green]")
         
         # Save to JSON and Excel after each scan
         self.save_json_data(code)
@@ -211,7 +219,10 @@ class ScannerHandler:
         # Check if box is full
         if len(self.current_box) >= box_capacity:
             self.play_sound(self.sound_box_full)
-            logging.info(f"Box {self.box_number} is full!")
+            console.print(Panel.fit(
+                f"[bold red]Коробка {self.box_number} заполнена![/bold red]",
+                border_style="red"
+            ))
             self.create_new_box()
             
         return True
@@ -238,7 +249,7 @@ class ScannerHandler:
         
         with open(self.current_json_file, 'w') as f:
             json.dump(existing_data, f, indent=4)
-        logging.info(f"Code {code} saved to {self.current_json_file}")
+        console.print(f"[blue]Код {code} сохранен в {self.current_json_file}[/blue]")
 
     def save_box_data(self):
         """Save box data to Excel file"""
@@ -268,52 +279,48 @@ class ScannerHandler:
             pass
             
         df.to_excel(self.current_excel_file, index=False)
-        logging.info(f"Box {self.box_number} data saved to {self.current_excel_file}")
+        console.print(f"[blue]Данные коробки {self.box_number} сохранены в {self.current_excel_file}[/blue]")
 
     def create_new_box(self):
-        """Create a new box and save the current one"""
-        if self.current_box:
-            # Create new box
-            self.current_box = []
-            self.box_number += 1
-            logging.info(f"Created new box {self.box_number}")
+        """Create a new box and save current box data"""
+        self.current_box = []
+        self.box_number += 1
+        console.print(Panel.fit(
+            f"[bold green]Создана новая коробка #{self.box_number}[/bold green]",
+            border_style="green"
+        ))
 
     def start_monitoring(self):
         """Start monitoring for scanner input"""
-        print("\n=== Сканер запущен! ===")
-        print("Вводите коды (для выхода введите 'exit' или нажмите Ctrl+C)")
-        print("Для принудительного закрытия коробки введите 'box'")
-        print("================================================")
+        console.print(Panel.fit(
+            "[bold blue]Сканер запущен![/bold blue]\n"
+            "[yellow]Вводите коды (для выхода нажмите Ctrl+C)[/yellow]\n"
+            "[yellow]Для принудительного закрытия коробки введите 'box'[/yellow]",
+            border_style="blue"
+        ))
         
         try:
             while True:
-                code = input("\nВведите код: ").strip()
+                code = Prompt.ask("\nВведите код").strip()
                 
-                if code.lower() == 'exit':
-                    print("\nЗавершение работы сканера...")
-                    break
-                    
                 if code.lower() == 'box':
                     if self.current_box:
-                        print(f"\nПринудительное закрытие коробки {self.box_number}...")
+                        console.print(f"\n[yellow]Принудительное закрытие коробки {self.box_number}...[/yellow]")
                         self.play_sound(self.sound_box_full)
                         self.create_new_box()
-                        print(f"Создана новая коробка {self.box_number}")
                     else:
-                        print("\nТекущая коробка пуста!")
+                        console.print("\n[red]Текущая коробка пуста![/red]")
                     continue
                     
                 if code:
                     self.process_code(code)
                 else:
-                    print("Код не может быть пустым!")
+                    console.print("[red]Код не может быть пустым![/red]")
                     
         except KeyboardInterrupt:
-            print("\n\nЗавершение работы сканера...")
+            console.print("\n[yellow]Мониторинг остановлен пользователем[/yellow]")
         except Exception as e:
-            print(f"\nПроизошла ошибка: {e}")
-        finally:
-            print("\nСканер остановлен.")
+            console.print(f"[red]Ошибка при мониторинге: {str(e)}[/red]")
 
 def main():
     while True:
