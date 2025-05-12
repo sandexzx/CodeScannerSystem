@@ -5,7 +5,7 @@ import re
 import json
 import os
 import pygame
-from config_manager import load_config, SCANNER_FILE_PATH, SOUND_SUCCESS, SOUND_ERROR, SOUND_BOX_FULL, EXPORT_FILE, JSON_EXPORT_DIR
+from config_manager import load_config, SCANNER_FILE_PATH, SOUND_SUCCESS, SOUND_ERROR, SOUND_BOX_FULL, EXPORT_FILE, JSON_EXPORT_DIR, SESSION_BASE_NAME
 
 # Configure logging
 logging.basicConfig(
@@ -31,6 +31,9 @@ class ScannerHandler:
         
         # Initialize JSON file handling
         self.json_base_name = os.path.join(JSON_EXPORT_DIR, EXPORT_FILE.split('/')[-1].replace('.xlsx', ''))
+        
+        # Initialize Excel file handling
+        self.excel_dir = os.path.dirname(EXPORT_FILE)
         if start_new_session:
             self.create_new_session()
         else:
@@ -72,8 +75,29 @@ class ScannerHandler:
             return int(match.group(1)) + 1
         return 1
 
+    def get_latest_session_number(self):
+        """Find the latest session number from existing Excel files"""
+        pattern = os.path.join(self.excel_dir, f"{SESSION_BASE_NAME}_*.xlsx")
+        files = glob.glob(pattern)
+        
+        if not files:
+            return 0
+            
+        # Extract session numbers and find the latest
+        versions = []
+        for file in files:
+            match = re.search(r'_(\d+)\.xlsx$', file)
+            if match:
+                versions.append(int(match.group(1)))
+        
+        return max(versions) if versions else 0
+
+    def get_next_session_number(self):
+        """Get the next session number"""
+        return self.get_latest_session_number() + 1
+
     def create_new_session(self):
-        """Create a new scanning session with a new JSON file"""
+        """Create a new scanning session with new JSON and Excel files"""
         next_version = self.get_next_version_number()
         self.current_json_file = f"{self.json_base_name}_{next_version}.json"
         
@@ -81,12 +105,21 @@ class ScannerHandler:
         with open(self.current_json_file, 'w') as f:
             json.dump([], f, indent=4)
             
+        # Create new Excel file for the session
+        next_session = self.get_next_session_number()
+        self.current_excel_file = os.path.join(self.excel_dir, f"{SESSION_BASE_NAME}_{next_session}.xlsx")
+        
+        # Initialize Excel file with empty DataFrame
+        import pandas as pd
+        df = pd.DataFrame(columns=['Box Number', 'Code', 'Timestamp'])
+        df.to_excel(self.current_excel_file, index=False)
+            
         # Reset state
         self.current_box = []
         self.box_number = 1
         self.processed_codes = set()
         
-        logging.info(f"Started new session with file: {self.current_json_file}")
+        logging.info(f"Started new session with files: {self.current_json_file} and {self.current_excel_file}")
 
     def load_existing_data(self):
         """Load existing data from the latest JSON file and restore state"""
@@ -97,6 +130,10 @@ class ScannerHandler:
             # If no existing file found, create a new session
             self.create_new_session()
             return
+            
+        # Set current Excel file based on the latest session
+        latest_session = self.get_latest_session_number()
+        self.current_excel_file = os.path.join(self.excel_dir, f"{SESSION_BASE_NAME}_{latest_session}.xlsx")
             
         try:
             with open(self.current_json_file, 'r') as f:
@@ -218,15 +255,20 @@ class ScannerHandler:
         
         # Save to Excel
         try:
-            existing_df = pd.read_excel(EXPORT_FILE)
-            # Remove entries for current box if they exist
-            existing_df = existing_df[existing_df['Box Number'] != self.box_number]
-            df = pd.concat([existing_df, df], ignore_index=True)
+            existing_df = pd.read_excel(self.current_excel_file)
+            if not existing_df.empty:
+                # Remove entries for current box if they exist
+                existing_df = existing_df[existing_df['Box Number'] != self.box_number]
+                # Only concatenate if we have data to add
+                if not df.empty:
+                    df = pd.concat([existing_df, df], ignore_index=True)
+                else:
+                    df = existing_df
         except FileNotFoundError:
             pass
             
-        df.to_excel(EXPORT_FILE, index=False)
-        logging.info(f"Box {self.box_number} data saved to {EXPORT_FILE}")
+        df.to_excel(self.current_excel_file, index=False)
+        logging.info(f"Box {self.box_number} data saved to {self.current_excel_file}")
 
     def create_new_box(self):
         """Create a new box and save the current one"""

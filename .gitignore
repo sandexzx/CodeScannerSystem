@@ -7,3 +7,5 @@ __pycache__/
 *.json
 !config.json
 boxes_*.json
+session_*.xlsx
+session_*.json

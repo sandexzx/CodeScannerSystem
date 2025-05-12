@@ -8,7 +8,8 @@ DEFAULT_CONFIG = {
     "sound_error": "sounds/error.wav",
     "sound_box_full": "sounds/box_full.wav",
     "export_file": "export/EXCEL/boxes.xlsx",
-    "json_export_dir": "export/JSON"
+    "json_export_dir": "export/JSON",
+    "session_base_name": "session"
 }
 
 CONFIG_FILE = "config.json"
@@ -18,7 +19,13 @@ def load_config():
     if os.path.exists(CONFIG_FILE):
         try:
             with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                existing_config = json.load(f)
+                # Merge with default config to ensure all keys exist
+                config = DEFAULT_CONFIG.copy()
+                config.update(existing_config)
+                # Save updated config back to file
+                save_config(config)
+                return config
         except json.JSONDecodeError:
             print("Ошибка чтения конфигурации. Используются настройки по умолчанию.")
             return DEFAULT_CONFIG.copy()
@@ -43,6 +50,7 @@ SOUND_ERROR = config["sound_error"]
 SOUND_BOX_FULL = config["sound_box_full"]
 EXPORT_FILE = config["export_file"]
 JSON_EXPORT_DIR = config["json_export_dir"]
+SESSION_BASE_NAME = config["session_base_name"]
 
 # Create necessary directories
 os.makedirs("sounds", exist_ok=True)
