@@ -4,8 +4,6 @@ import glob
 import re
 import json
 import os
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
 import pygame
 from config_manager import load_config, SCANNER_FILE_PATH, FILE_FORMAT, SOUND_SUCCESS, SOUND_ERROR, SOUND_BOX_FULL, EXPORT_FILE
 
@@ -19,7 +17,7 @@ logging.basicConfig(
     ]
 )
 
-class ScannerFileHandler(FileSystemEventHandler):
+class ScannerHandler:
     def __init__(self, start_new_session=False):
         self.current_box = []
         self.box_number = 1
@@ -31,11 +29,6 @@ class ScannerFileHandler(FileSystemEventHandler):
         self.sound_error = pygame.mixer.Sound(SOUND_ERROR)
         self.sound_box_full = pygame.mixer.Sound(SOUND_BOX_FULL)
         
-        # Create scanner file if it doesn't exist
-        if not os.path.exists(SCANNER_FILE_PATH):
-            with open(SCANNER_FILE_PATH, 'w') as f:
-                pass
-
         # Initialize JSON file handling
         self.json_base_name = EXPORT_FILE.replace('.xlsx', '')
         if start_new_session:
@@ -242,54 +235,52 @@ class ScannerFileHandler(FileSystemEventHandler):
         df.to_excel(EXPORT_FILE, index=False)
         logging.info(f"Box {self.box_number} data saved to {EXPORT_FILE}")
 
-    def on_modified(self, event):
-        if event.src_path == os.path.abspath(SCANNER_FILE_PATH):
-            try:
-                # Читаем содержимое файла
-                with open(SCANNER_FILE_PATH, 'r') as f:
-                    content = f.read().strip()
-                    
-                # Если файл пустой, пропускаем обработку
-                if not content:
-                    return
-                    
-                # Обрабатываем содержимое
-                if FILE_FORMAT == "csv":
-                    codes = content.split(',')
-                    for code in codes:
-                        if code.strip():  # Проверяем, что код не пустой
-                            self.process_code(code)
-                else:  # single_line
-                    codes = content.split('\n')
-                    for code in codes:
-                        if code.strip():  # Проверяем, что код не пустой
-                            self.process_code(code)
-                            
-                # Очищаем файл только после успешной обработки
-                with open(SCANNER_FILE_PATH, 'w') as f:
-                    pass
-                    
-            except Exception as e:
-                logging.error(f"Error processing file: {str(e)}")
-                # В случае ошибки не очищаем файл, чтобы не потерять данные
-
-def start_monitoring(start_new_session=False):
-    """Start monitoring the scanner file"""
-    event_handler = ScannerFileHandler(start_new_session=start_new_session)
-    observer = Observer()
-    observer.schedule(event_handler, path=os.path.dirname(os.path.abspath(SCANNER_FILE_PATH)), recursive=False)
-    observer.start()
-    
-    logging.info(f"Started monitoring {SCANNER_FILE_PATH}")
-    
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        observer.stop()
-        logging.info("Monitoring stopped")
+    def start_monitoring(self):
+        """Start monitoring for scanner input"""
+        print("\n=== Сканер запущен! ===")
+        print("Вводите коды (для выхода введите 'exit' или нажмите Ctrl+C)")
+        print("================================================")
         
-    observer.join()
+        try:
+            while True:
+                code = input("\nВведите код: ").strip()
+                
+                if code.lower() == 'exit':
+                    print("\nЗавершение работы сканера...")
+                    break
+                    
+                if code:
+                    self.process_code(code)
+                else:
+                    print("Код не может быть пустым!")
+                    
+        except KeyboardInterrupt:
+            print("\n\nЗавершение работы сканера...")
+        except Exception as e:
+            print(f"\nПроизошла ошибка: {e}")
+        finally:
+            print("\nСканер остановлен.")
+
+def main():
+    while True:
+        print("\n=== Меню ===")
+        print("1. Начать новую сессию сканирования")
+        print("2. Продолжить существующую сессию")
+        print("3. Выход")
+        
+        choice = input("\nВыберите действие (1-3): ").strip()
+        
+        if choice == '1':
+            handler = ScannerHandler(start_new_session=True)
+            handler.start_monitoring()
+        elif choice == '2':
+            handler = ScannerHandler(start_new_session=False)
+            handler.start_monitoring()
+        elif choice == '3':
+            print("\nЗавершение работы программы...")
+            break
+        else:
+            print("\nНеверный выбор. Пожалуйста, выберите 1-3.")
 
 if __name__ == "__main__":
-    start_monitoring() 
+    main() 

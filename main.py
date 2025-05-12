@@ -1,6 +1,6 @@
 import os
 import sys
-from scanner_handler import start_monitoring
+from scanner_handler import ScannerHandler
 from config_manager import load_config, save_config, SCANNER_FILE_PATH, FILE_FORMAT
 
 def clear_screen():
@@ -8,8 +8,8 @@ def clear_screen():
 
 def print_menu():
     print("\n=== Система учета товаров с отслеживанием файла данных сканера ===")
-    print("1. Начать мониторинг файла сканера")
-    print("2. Начать новую сессию сканирования")
+    print("1. Начать новую сессию сканирования")
+    print("2. Продолжить существующую сессию")
     print("3. Показать текущие настройки")
     print("4. Изменить путь к файлу сканера")
     print("5. Изменить формат файла")
@@ -78,14 +78,16 @@ def main():
         
         if choice == "1":
             clear_screen()
-            print("Запуск мониторинга файла сканера...")
-            print("Для остановки нажмите Ctrl+C")
-            start_monitoring()
-        elif choice == "2":
-            clear_screen()
             print("Запуск новой сессии сканирования...")
             print("Для остановки нажмите Ctrl+C")
-            start_monitoring(start_new_session=True)
+            handler = ScannerHandler(start_new_session=True)
+            handler.start_monitoring()
+        elif choice == "2":
+            clear_screen()
+            print("Продолжение существующей сессии...")
+            print("Для остановки нажмите Ctrl+C")
+            handler = ScannerHandler(start_new_session=False)
+            handler.start_monitoring()
         elif choice == "3":
             show_settings()
         elif choice == "4":
