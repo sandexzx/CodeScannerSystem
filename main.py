@@ -1,7 +1,7 @@
 import os
 import sys
 from scanner_handler import ScannerHandler
-from config_manager import load_config, save_config, SCANNER_FILE_PATH, FILE_FORMAT
+from config_manager import load_config, save_config, SCANNER_FILE_PATH
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -12,16 +12,14 @@ def print_menu():
     print("2. Продолжить существующую сессию")
     print("3. Показать текущие настройки")
     print("4. Изменить путь к файлу сканера")
-    print("5. Изменить формат файла")
-    print("6. Изменить вместимость коробки")
-    print("7. Выход")
+    print("5. Изменить вместимость коробки")
+    print("6. Выход")
     print("================================================================")
 
 def show_settings():
     config = load_config()
     print("\nТекущие настройки:")
     print(f"Путь к файлу сканера: {config['scanner_file_path']}")
-    print(f"Формат файла: {config['file_format']}")
     print(f"Вместимость коробки: {config['box_capacity']} единиц")
     input("\nНажмите Enter для продолжения...")
 
@@ -32,25 +30,6 @@ def change_scanner_file():
         config["scanner_file_path"] = new_path
         save_config(config)
         print(f"Путь к файлу сканера изменен на: {new_path}")
-    input("\nНажмите Enter для продолжения...")
-
-def change_file_format():
-    config = load_config()
-    print("\nВыберите формат файла:")
-    print("1. Одна строка - один код")
-    print("2. CSV (коды через запятую)")
-    choice = input("Ваш выбор (1/2): ").strip()
-    
-    if choice == "1":
-        config["file_format"] = "single_line"
-    elif choice == "2":
-        config["file_format"] = "csv"
-    else:
-        print("Неверный выбор!")
-        return
-    
-    save_config(config)
-    print(f"Формат файла изменен на: {config['file_format']}")
     input("\nНажмите Enter для продолжения...")
 
 def change_box_capacity():
@@ -74,7 +53,7 @@ def main():
         clear_screen()
         print_menu()
         
-        choice = input("\nВыберите действие (1-7): ").strip()
+        choice = input("\nВыберите действие (1-6): ").strip()
         
         if choice == "1":
             clear_screen()
@@ -93,10 +72,8 @@ def main():
         elif choice == "4":
             change_scanner_file()
         elif choice == "5":
-            change_file_format()
-        elif choice == "6":
             change_box_capacity()
-        elif choice == "7":
+        elif choice == "6":
             print("\nЗавершение работы программы...")
             sys.exit(0)
         else:

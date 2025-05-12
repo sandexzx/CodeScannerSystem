@@ -3,7 +3,6 @@ import os
 
 DEFAULT_CONFIG = {
     "scanner_file_path": "scanner_data.txt",
-    "file_format": "single_line",
     "box_capacity": 12,
     "sound_success": "sounds/success.wav",
     "sound_error": "sounds/error.wav",
@@ -38,7 +37,6 @@ config = load_config()
 
 # Export settings as module variables
 SCANNER_FILE_PATH = config["scanner_file_path"]
-FILE_FORMAT = config["file_format"]
 BOX_CAPACITY = config["box_capacity"]
 SOUND_SUCCESS = config["sound_success"]
 SOUND_ERROR = config["sound_error"]

@@ -5,7 +5,7 @@ import re
 import json
 import os
 import pygame
-from config_manager import load_config, SCANNER_FILE_PATH, FILE_FORMAT, SOUND_SUCCESS, SOUND_ERROR, SOUND_BOX_FULL, EXPORT_FILE, JSON_EXPORT_DIR
+from config_manager import load_config, SCANNER_FILE_PATH, SOUND_SUCCESS, SOUND_ERROR, SOUND_BOX_FULL, EXPORT_FILE, JSON_EXPORT_DIR
 
 # Configure logging
 logging.basicConfig(
