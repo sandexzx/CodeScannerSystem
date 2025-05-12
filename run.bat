@@ -12,9 +12,6 @@ if not exist .venv (
 REM Activate virtual environment
 call .venv\Scripts\activate.bat
 
-REM Start scanner emulator in a new window
-start "Scanner Emulator" cmd /k "call .venv\Scripts\activate.bat && python scanner_emulator.py"
-
 REM Run the main application
 python main.py
 
