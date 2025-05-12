@@ -1,0 +1,9 @@
+{
+    "scanner_file_path": "scanner_data.txt",
+    "file_format": "single_line",
+    "box_capacity": 12,
+    "sound_success": "sounds/success.wav",
+    "sound_error": "sounds/error.wav",
+    "sound_box_full": "sounds/box_full.wav",
+    "export_file": "export/boxes.xlsx"
+}

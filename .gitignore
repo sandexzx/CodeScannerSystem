@@ -5,3 +5,5 @@ __pycache__/
 *.log   
 *.xlsx#
 *.json
+!config.json
+boxes_*.json

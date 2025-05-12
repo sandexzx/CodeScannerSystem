@@ -3,10 +3,11 @@ import logging
 import glob
 import re
 import json
+import os
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import pygame
-from config import *
+from config_manager import load_config, SCANNER_FILE_PATH, FILE_FORMAT, SOUND_SUCCESS, SOUND_ERROR, SOUND_BOX_FULL, EXPORT_FILE
 
 # Configure logging
 logging.basicConfig(
@@ -118,9 +119,10 @@ class ScannerFileHandler(FileSystemEventHandler):
                 # Get codes from the last box
                 last_box_codes = [entry['Code'] for entry in existing_data 
                                 if entry['Box Number'] == self.box_number]
-                
+                config = load_config()
+                box_capacity = config['box_capacity']
                 # If the last box wasn't full, restore it
-                if len(last_box_codes) < BOX_CAPACITY:
+                if len(last_box_codes) < box_capacity:
                     self.current_box = last_box_codes
                 else:
                     # If the last box was full, start a new one
@@ -149,6 +151,10 @@ class ScannerFileHandler(FileSystemEventHandler):
         """Process a single scanned code"""
         code = code.strip()
         
+        # Get current box capacity from config
+        config = load_config()
+        box_capacity = config['box_capacity']
+        
         # Validate code (basic validation - can be extended)
         if not code or len(code) < 3:
             logging.warning(f"Invalid code format: {code}")
@@ -166,13 +172,13 @@ class ScannerFileHandler(FileSystemEventHandler):
         self.play_sound(self.sound_success)
         
         element_number = len(self.current_box)
-        logging.info(f"Code added to box {self.box_number} (element {element_number}/{BOX_CAPACITY}): {code}")
+        logging.info(f"Code added to box {self.box_number} (element {element_number}/{box_capacity}): {code}")
         
         # Save to JSON after each scan
         self.save_json_data(code)
         
         # Check if box is full
-        if len(self.current_box) >= BOX_CAPACITY:
+        if len(self.current_box) >= box_capacity:
             self.play_sound(self.sound_box_full)
             logging.info(f"Box {self.box_number} is full!")
             self.create_new_box()
