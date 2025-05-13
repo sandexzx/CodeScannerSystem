@@ -298,8 +298,7 @@ class ScannerHandler:
         """Start monitoring for scanner input"""
         console.print(Panel.fit(
             "[bold blue]Сканер запущен![/bold blue]\n"
-            "[yellow]Вводите коды (для выхода нажмите Ctrl+C)[/yellow]\n"
-            "[yellow]Для принудительного закрытия коробки введите 'box'[/yellow]",
+            "[yellow]Вводите коды (для выхода нажмите Ctrl+C)[/yellow]",
             border_style="blue"
         ))
         
@@ -307,15 +306,6 @@ class ScannerHandler:
             while True:
                 code = Prompt.ask("\nВведите код").strip()
                 
-                if code.lower() == 'box':
-                    if self.current_box:
-                        console.print(f"\n[yellow]Принудительное закрытие коробки {self.box_number}...[/yellow]")
-                        self.play_sound(self.sound_box_full)
-                        self.create_new_box()
-                    else:
-                        console.print("\n[red]Текущая коробка пуста![/red]")
-                    continue
-                    
                 if code:
                     self.process_code(code)
                 else:
