@@ -21,8 +21,8 @@ def print_menu():
     ))
     
     table = Table(show_header=False, box=None)
-    table.add_row("1", "Начать новую сессию сканирования")
-    table.add_row("2", "Продолжить существующую сессию")
+    table.add_row("1", "Продолжить смену")
+    table.add_row("2", "Начать новую смену")
     table.add_row("3", "Показать текущие настройки")
     table.add_row("4", "Изменить путь к файлу сканера")
     table.add_row("5", "Изменить вместимость коробки")
@@ -76,13 +76,13 @@ def main():
         
         if choice == "1":
             clear_screen()
-            console.print("[bold blue]Запуск новой сессии сканирования...[/bold blue]")
-            handler = ScannerHandler(start_new_session=True)
+            console.print("[bold blue]Продолжение существующей смены...[/bold blue]")
+            handler = ScannerHandler(start_new_session=False)
             handler.start_monitoring()
         elif choice == "2":
             clear_screen()
-            console.print("[bold blue]Продолжение существующей сессии...[/bold blue]")
-            handler = ScannerHandler(start_new_session=False)
+            console.print("[bold blue]Запуск новой смены...[/bold blue]")
+            handler = ScannerHandler(start_new_session=True)
             handler.start_monitoring()
         elif choice == "3":
             show_settings()
