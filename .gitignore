@@ -1,11 +1,10 @@
 __pycache__/
 .venv/
 *.xlsx
-*.txt
 *.log   
 *.xlsx#
-*.json
 !config.json
 boxes_*.json
 session_*.xlsx
 session_*.json
+node_modules/
