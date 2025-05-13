@@ -38,7 +38,7 @@ class ScannerHandler:
         self.sound_box_full = pygame.mixer.Sound(SOUND_BOX_FULL)
         
         # Initialize JSON file handling
-        self.json_base_name = os.path.join(JSON_EXPORT_DIR, EXPORT_FILE.split('/')[-1].replace('.xlsx', ''))
+        self.json_base_name = os.path.join(JSON_EXPORT_DIR, SESSION_BASE_NAME)
         
         # Initialize Excel file handling
         self.excel_dir = os.path.dirname(EXPORT_FILE)
@@ -62,9 +62,8 @@ class ScannerHandler:
         # Extract version numbers and find the latest
         versions = []
         for file in files:
-            match = re.search(r'_(\d+)\.json$', file)
-            if match:
-                versions.append((int(match.group(1)), file))
+            mod_time = os.path.getmtime(file)
+            versions.append((mod_time, file))
         
         if not versions:
             return None
@@ -72,37 +71,13 @@ class ScannerHandler:
         # Return the file with the highest version number
         return max(versions, key=lambda x: x[0])[1]
 
-    def get_next_version_number(self):
-        """Get the next version number for a new session"""
-        latest_file = self.get_latest_json_file()
-        if not latest_file:
-            return 1
-            
-        match = re.search(r'_(\d+)\.json$', latest_file)
-        if match:
-            return int(match.group(1)) + 1
-        return 1
-
     def get_latest_session_number(self):
         """Find the latest session number from existing Excel files"""
         pattern = os.path.join(self.excel_dir, f"{SESSION_BASE_NAME}_*.xlsx")
         files = glob.glob(pattern)
         
-        if not files:
-            return 0
-            
-        # Extract session numbers and find the latest
-        versions = []
-        for file in files:
-            match = re.search(r'_(\d+)\.xlsx$', file)
-            if match:
-                versions.append(int(match.group(1)))
-        
-        return max(versions) if versions else 0
-
-    def get_next_session_number(self):
-        """Get the next session number"""
-        return self.get_latest_session_number() + 1
+        # Просто проверяем наличие файлов
+        return 1 if files else 0
 
     def create_new_session(self):
         """Create a new scanning session with new JSON and Excel files"""
@@ -110,16 +85,17 @@ class ScannerHandler:
         os.makedirs(os.path.dirname(self.json_base_name), exist_ok=True)
         os.makedirs(self.excel_dir, exist_ok=True)
         
-        next_version = self.get_next_version_number()
-        self.current_json_file = f"{self.json_base_name}_{next_version}.json"
+        # Получаем текущую дату и время в нужном формате
+        timestamp = datetime.now().strftime("%d.%m.%y_%H:%M")
+        self.current_json_file = f"{self.json_base_name}_{timestamp}.json"
         
         # Initialize new JSON file with empty array
         with open(self.current_json_file, 'w') as f:
             json.dump([], f, indent=4)
             
         # Create new Excel file for the session
-        next_session = self.get_next_session_number()
-        self.current_excel_file = os.path.join(self.excel_dir, f"{SESSION_BASE_NAME}_{next_session}.xlsx")
+        # Используем тот же timestamp для Excel файла
+        self.current_excel_file = os.path.join(self.excel_dir, f"{SESSION_BASE_NAME}_{timestamp}.xlsx")
         
         # Initialize Excel file with empty DataFrame
         import pandas as pd
@@ -143,9 +119,23 @@ class ScannerHandler:
             self.create_new_session()
             return
             
-        # Set current Excel file based on the latest session
-        latest_session = self.get_latest_session_number()
-        self.current_excel_file = os.path.join(self.excel_dir, f"{SESSION_BASE_NAME}_{latest_session}.xlsx")
+        # Извлекаем дату и время из имени JSON файла
+        json_filename = os.path.basename(self.current_json_file)
+        match = re.search(r'_(\d{2}\.\d{2}\.\d{2}_\d{2}:\d{2})\.json$', json_filename)
+        if match:
+            timestamp = match.group(1)
+            # Формируем имя Excel файла с тем же таймстампом
+            self.current_excel_file = os.path.join(self.excel_dir, f"{SESSION_BASE_NAME}_{timestamp}.xlsx")
+        else:
+            # Если не удалось извлечь таймстамп, ищем последний Excel файл
+            pattern = os.path.join(self.excel_dir, f"{SESSION_BASE_NAME}_*.xlsx")
+            files = glob.glob(pattern)
+            if files:
+                self.current_excel_file = max(files, key=os.path.getmtime)
+            else:
+                # Если вообще ничего нет, создаем новую сессию
+                self.create_new_session()
+                return
             
         try:
             with open(self.current_json_file, 'r') as f:
