@@ -86,7 +86,7 @@ class ScannerHandler:
         os.makedirs(self.excel_dir, exist_ok=True)
         
         # Получаем текущую дату и время в нужном формате
-        timestamp = datetime.now().strftime("%d.%m.%y_%H:%M")
+        timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
         self.current_json_file = f"{self.json_base_name}_{timestamp}.json"
         
         # Initialize new JSON file with empty array
@@ -121,7 +121,7 @@ class ScannerHandler:
             
         # Извлекаем дату и время из имени JSON файла
         json_filename = os.path.basename(self.current_json_file)
-        match = re.search(r'_(\d{2}\.\d{2}\.\d{2}_\d{2}:\d{2})\.json$', json_filename)
+        match = re.search(r'_(\d{2}_\d{2}_\d{2}_\d{2}_\d{2})\.json$', json_filename)
         if match:
             timestamp = match.group(1)
             # Формируем имя Excel файла с тем же таймстампом
