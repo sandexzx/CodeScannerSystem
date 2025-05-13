@@ -4,7 +4,7 @@ echo ========================================
 echo Checking Python installation...
 echo ========================================
 
-+ for /f "tokens=2" %%i in ('python --version 2^>^&1') do set pyver=%%i
+for /f "tokens=2" %%i in ('python --version 2^>^&1') do set pyver=%%i
 if errorlevel 1 (
     echo Python is not installed or not in PATH
     echo Please install Python 3.8 or higher from https://www.python.org/downloads/
