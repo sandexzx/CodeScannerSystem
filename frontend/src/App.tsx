@@ -41,15 +41,17 @@ function App() {
         throw new Error(err.detail || 'Scan failed');
       }
       const data = await response.json();
-      const resultCode = data.result || code;
-      const timestamp = new Date().toISOString();
-      const newCode: CodeHistoryItem = {
-        code: resultCode,
-        timestamp,
-        sessionId: session?.id || 'default-session'
-      };
-      setCurrentCode(resultCode);
-      setCodeHistory(prev => [newCode, ...prev].slice(0, 100));
+      // Only add to history if we got a valid code back
+      if (data.result) {
+        const timestamp = new Date().toISOString();
+        const newCode: CodeHistoryItem = {
+          code: data.result,
+          timestamp,
+          sessionId: session?.id || 'default-session'
+        };
+        setCurrentCode(data.result);
+        setCodeHistory(prev => [newCode, ...prev].slice(0, 100));
+      }
     } catch (e: any) {
       setError(e.message || 'Scan error');
     } finally {

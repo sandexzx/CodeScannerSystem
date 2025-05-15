@@ -8,3 +8,4 @@ boxes_*.json
 session_*.xlsx
 session_*.json
 node_modules/
+nohup.out

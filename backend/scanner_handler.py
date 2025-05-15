@@ -188,8 +188,14 @@ class ScannerHandler:
         box_capacity = config['box_capacity']
         
         # Validate code (basic validation - can be extended)
-        if not code or len(code) < 3:
-            console.print(f"[red]Неверный формат кода: {code}[/red]")
+        if not code:
+            console.print(f"[red]Неверный формат кода: пустой код[/red]")
+            self.play_sound(self.sound_error)
+            return False
+            
+        if len(code) < 3:
+            console.print(f"[red]Неверный формат кода: код слишком короткий ({code})[/red]")
+            self.play_sound(self.sound_error)
             return False
             
         # Check for duplicates
@@ -219,7 +225,7 @@ class ScannerHandler:
             ))
             self.create_new_box()
             
-        return True
+        return code  # Return the validated code instead of True
 
     def save_json_data(self, code):
         """Save single code data to JSON file"""
