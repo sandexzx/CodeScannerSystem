@@ -52,11 +52,15 @@ function App() {
         setCurrentCode(data.result);
         setCodeHistory(prev => [newCode, ...prev].slice(0, 100));
         
-        // Update session with incremented scannedItems
+        // Update session with incremented counters
         if (session) {
+          const newCurrentBoxItems = session.currentBoxItems + 1;
+          const isBoxFull = newCurrentBoxItems >= session.boxCapacity;
+          
           setSession({
             ...session,
-            scannedItems: session.scannedItems + 1
+            scannedItems: session.scannedItems + 1,
+            currentBoxItems: isBoxFull ? 0 : newCurrentBoxItems // Reset current box items if box is full
           });
         }
       }
@@ -74,7 +78,8 @@ function App() {
       startTime: new Date().toISOString(),
       status: 'active',
       boxCapacity,
-      scannedItems: 0
+      scannedItems: 0,
+      currentBoxItems: 0
     };
     setSession(newSession);
     setCurrentCode('');

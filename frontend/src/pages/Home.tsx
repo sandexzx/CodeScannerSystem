@@ -55,7 +55,11 @@ export const Home = () => {
   };
 
   // Calculate progress percentage
-  const progress = session ? (session.scannedItems / boxCapacity) * 100 : 0;
+  const progress = session ? (
+    session.currentBoxItems === 0 && session.scannedItems > 0 
+      ? 100 // Show full progress when box is full (currentBoxItems is 0 but we have scanned items)
+      : (session.currentBoxItems / boxCapacity) * 100
+  ) : 0;
 
   return (
     <div className="flex flex-col h-full">
@@ -91,7 +95,7 @@ export const Home = () => {
         {isScanning && (
           <div className="w-full max-w-md mb-8">
             <div className="flex justify-between text-sm text-gray-600 mb-1">
-              <span>{session?.scannedItems || 0} scanned</span>
+              <span>{session?.currentBoxItems || 0} scanned</span>
               <span>Capacity: {boxCapacity}</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2.5">

@@ -5,6 +5,7 @@ export interface ScanSession {
   status: 'active' | 'completed' | 'cancelled';
   boxCapacity: number;
   scannedItems: number;
+  currentBoxItems: number;
 }
 
 export interface CodeHistoryItem {
