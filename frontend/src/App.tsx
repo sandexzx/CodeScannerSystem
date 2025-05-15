@@ -120,7 +120,6 @@ function App() {
           {session && (
             <div className="mt-2 text-sm text-gray-500">
               Session: {new Date(session.startTime).toLocaleString()} • 
-              Scanned: {codeHistory.length} of {boxCapacity} • 
               <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
                 session.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
               }`}>
