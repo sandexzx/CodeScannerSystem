@@ -1,7 +1,7 @@
 import os
 import sys
 from scanner_handler import ScannerHandler
-from config_manager import load_config, save_config, SCANNER_FILE_PATH
+from config_manager import load_config, save_config, SCANNER_FILE_PATH, update_box_capacity
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -57,14 +57,13 @@ def change_box_capacity():
         try:
             new_capacity = int(Prompt.ask("\nВведите новую вместимость коробки"))
             if new_capacity > 0:
-                config["box_capacity"] = new_capacity
-                save_config(config)
+                config = update_box_capacity(new_capacity)
                 console.print(f"[green]Вместимость коробки изменена на:[/green] {new_capacity}")
                 break
             else:
-                console.print("[red]Вместимость должна быть положительным числом![/red]")
+                console.print("[red]Вместимость должна быть положительным числом[/red]")
         except ValueError:
-            console.print("[red]Пожалуйста, введите корректное число![/red]")
+            console.print("[red]Пожалуйста, введите корректное число[/red]")
     Prompt.ask("\nНажмите Enter для продолжения")
 
 def main():

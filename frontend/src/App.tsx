@@ -11,15 +11,25 @@ function App() {
   const [currentCode, setCurrentCode] = useState<string>('');
   const [session, setSession] = useState<ScanSession | null>(null);
   const [codeHistory, setCodeHistory] = useState<CodeHistoryItem[]>([]);
-  const [boxCapacity, setBoxCapacity] = useState<number>(10);
+  const [boxCapacity, setBoxCapacity] = useState<number>(12); // Default to 12 to match backend
   const navigate = useNavigate();
 
   // Load saved settings on initial render
   useEffect(() => {
-    const savedBoxCapacity = localStorage.getItem('boxCapacity');
-    if (savedBoxCapacity) {
-      setBoxCapacity(parseInt(savedBoxCapacity, 10));
-    }
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch('/api/settings');
+        if (response.ok) {
+          const data = await response.json();
+          setBoxCapacity(data.box_capacity);
+        } else {
+          console.error('Failed to fetch settings:', await response.text());
+        }
+      } catch (error) {
+        console.error('Failed to fetch settings:', error);
+      }
+    };
+    fetchSettings();
   }, []);
 
   // Handle new scan
@@ -98,9 +108,26 @@ function App() {
   };
 
   // Update box capacity
-  const updateBoxCapacity = (capacity: number) => {
-    setBoxCapacity(capacity);
-    localStorage.setItem('boxCapacity', capacity.toString());
+  const updateBoxCapacity = async (capacity: number) => {
+    try {
+      const response = await fetch('/api/settings/box-capacity', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ capacity }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setBoxCapacity(data.box_capacity);
+      } else {
+        const error = await response.text();
+        console.error('Failed to update box capacity:', error);
+      }
+    } catch (error) {
+      console.error('Error updating box capacity:', error);
+    }
   };
 
   return (

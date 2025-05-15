@@ -1,6 +1,6 @@
 {
     "scanner_file_path": "scanner_data.txt",
-    "box_capacity": 12,
+    "box_capacity": 3,
     "sound_success": "sounds/success.wav",
     "sound_error": "sounds/error.wav",
     "sound_box_full": "sounds/box_full.wav",

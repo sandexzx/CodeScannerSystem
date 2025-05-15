@@ -39,6 +39,13 @@ def save_config(config):
     with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
         json.dump(config, f, indent=4, ensure_ascii=False)
 
+def update_box_capacity(new_capacity):
+    """Update box capacity in config and return updated config"""
+    config = load_config()
+    config['box_capacity'] = new_capacity
+    save_config(config)
+    return config
+
 # Load initial configuration
 config = load_config()
 
