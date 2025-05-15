@@ -14,6 +14,7 @@ export const Home = () => {
   
   const [isScanning, setIsScanning] = useState(false);
   const [scanInput, setScanInput] = useState('');
+  const [isAdminMode, setIsAdminMode] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Focus the input when the component mounts
@@ -27,6 +28,13 @@ export const Home = () => {
   const handleScan = (e: React.FormEvent) => {
     e.preventDefault();
     if (scanInput.trim()) {
+      // Check for admin mode
+      if (scanInput.trim() === 'admin') {
+        setIsAdminMode(true);
+        setScanInput('');
+        return;
+      }
+
       onNewScan(scanInput.trim());
       setScanInput('');
       
@@ -37,6 +45,23 @@ export const Home = () => {
         }
       }, 100);
     }
+  };
+
+  // Generate random DataMatrix code
+  const generateRandomCode = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const length = 12; // Typical DataMatrix code length
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+
+  // Handle admin mode scan
+  const handleAdminScan = () => {
+    const randomCode = generateRandomCode();
+    onNewScan(randomCode);
   };
 
   // Start a new scanning session
@@ -52,6 +77,7 @@ export const Home = () => {
   const completeSession = () => {
     onCompleteSession();
     setIsScanning(false);
+    setIsAdminMode(false);
   };
 
   // Calculate progress percentage
@@ -69,6 +95,7 @@ export const Home = () => {
         <div className="w-full max-w-2xl mb-8">
           <h2 className="text-sm font-medium text-gray-500 mb-2">
             {isScanning ? 'SCANNING' : 'READY TO SCAN'}
+            {isAdminMode && ' (ADMIN MODE)'}
           </h2>
           
           {currentCode ? (
@@ -126,6 +153,15 @@ export const Home = () => {
             >
               Add
             </button>
+            {isAdminMode && (
+              <button
+                type="button"
+                onClick={handleAdminScan}
+                className="ml-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                Simulate Scan
+              </button>
+            )}
           </div>
         </form>
       </div>
