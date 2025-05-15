@@ -36,19 +36,51 @@ function App() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Continue existing session
+  const continueSession = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('http://localhost:5001/api/continue-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to continue session');
+      }
+      const data = await response.json();
+      const newSession: ScanSession = {
+        id: data.sessionId,
+        startTime: data.startTime,
+        status: 'active',
+        boxCapacity: data.boxCapacity,
+        scannedItems: data.scannedItems,
+        currentBoxItems: data.currentBoxItems
+      };
+      setSession(newSession);
+      setCurrentCode('');
+      setCodeHistory([]);
+    } catch (e: any) {
+      setError(e.message || 'Failed to continue session');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Новый handleNewScan: отправляет запрос на backend
   const handleNewScan = async (code: string) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:8000/scan', {
+      const response = await fetch('http://localhost:5001/api/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code })
       });
       if (!response.ok) {
         const err = await response.json();
-        throw new Error(err.detail || 'Scan failed');
+        throw new Error(err.error || 'Scan failed');
       }
       const data = await response.json();
       // Only add to history if we got a valid code back
@@ -82,35 +114,64 @@ function App() {
   };
 
   // Start new session
-  const startNewSession = () => {
-    const newSession: ScanSession = {
-      id: `session-${Date.now()}`,
-      startTime: new Date().toISOString(),
-      status: 'active',
-      boxCapacity,
-      scannedItems: 0,
-      currentBoxItems: 0
-    };
-    setSession(newSession);
-    setCurrentCode('');
-    setCodeHistory([]);
+  const startNewSession = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('http://localhost:5001/api/start-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to start session');
+      }
+      const data = await response.json();
+      const newSession: ScanSession = {
+        id: data.sessionId,
+        startTime: data.startTime,
+        status: 'active',
+        boxCapacity: data.boxCapacity,
+        scannedItems: data.scannedItems,
+        currentBoxItems: data.currentBoxItems
+      };
+      setSession(newSession);
+      setCurrentCode('');
+      setCodeHistory([]);
+    } catch (e: any) {
+      setError(e.message || 'Failed to start session');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Complete session
-  const completeSession = () => {
+  const completeSession = async () => {
     if (session) {
-      setSession({
-        ...session,
-        status: 'completed',
-        endTime: new Date().toISOString()
-      });
+      try {
+        const response = await fetch('http://localhost:5001/api/complete-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || 'Failed to complete session');
+        }
+        setSession({
+          ...session,
+          status: 'completed',
+          endTime: new Date().toISOString()
+        });
+      } catch (e: any) {
+        setError(e.message || 'Failed to complete session');
+      }
     }
   };
 
   // Update box capacity
   const updateBoxCapacity = async (capacity: number) => {
     try {
-      const response = await fetch('/api/settings/box-capacity', {
+      const response = await fetch('http://localhost:5001/api/settings/box-capacity', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -122,8 +183,8 @@ function App() {
         const data = await response.json();
         setBoxCapacity(data.box_capacity);
       } else {
-        const error = await response.text();
-        console.error('Failed to update box capacity:', error);
+        const error = await response.json();
+        console.error('Failed to update box capacity:', error.error);
       }
     } catch (error) {
       console.error('Error updating box capacity:', error);
@@ -138,6 +199,7 @@ function App() {
       boxCapacity,
       onNewScan: handleNewScan,
       onStartSession: startNewSession,
+      onContinueSession: continueSession,
       onCompleteSession: completeSession,
       onUpdateBoxCapacity: updateBoxCapacity
     }}>

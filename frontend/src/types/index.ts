@@ -21,6 +21,7 @@ export interface CodeContextType {
   boxCapacity: number;
   onNewScan: (code: string) => void;
   onStartSession: () => void;
+  onContinueSession: () => void;
   onCompleteSession: () => void;
   onUpdateBoxCapacity: (capacity: number) => void;
 }

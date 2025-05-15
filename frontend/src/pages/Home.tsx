@@ -8,6 +8,7 @@ export const Home = () => {
     session,
     onNewScan,
     onStartSession,
+    onContinueSession,
     onCompleteSession,
     boxCapacity,
   } = useCodeContext();
@@ -67,6 +68,15 @@ export const Home = () => {
   // Start a new scanning session
   const startSession = () => {
     onStartSession();
+    setIsScanning(true);
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
+  // Continue existing session
+  const continueExistingSession = async () => {
+    await onContinueSession();
     setIsScanning(true);
     if (inputRef.current) {
       inputRef.current.focus();
@@ -170,13 +180,22 @@ export const Home = () => {
       <div className="p-6 bg-gray-50 border-t border-gray-200">
         <div className="flex justify-center space-x-4">
           {!isScanning ? (
-            <button
-              onClick={startSession}
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-            >
-              <PlayIcon className="-ml-1 mr-2 h-5 w-5" />
-              Start New Session
-            </button>
+            <>
+              <button
+                onClick={continueExistingSession}
+                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <ArrowPathIcon className="-ml-1 mr-2 h-5 w-5" />
+                Continue Session
+              </button>
+              <button
+                onClick={startSession}
+                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                <PlayIcon className="-ml-1 mr-2 h-5 w-5" />
+                Start New Session
+              </button>
+            </>
           ) : (
             <>
               <button
