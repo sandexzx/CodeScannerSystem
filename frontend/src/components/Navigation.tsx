@@ -12,6 +12,9 @@ export const Navigation = () => {
     { name: 'Settings', path: '/settings', icon: Cog6ToothIcon },
   ];
 
+  // Calculate packed boxes based on scanned items and box capacity
+  const packedBoxes = session ? Math.floor(session.scannedItems / session.boxCapacity) : 0;
+
   return (
     <nav className="bg-white border-t border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -37,19 +40,13 @@ export const Navigation = () => {
           </div>
           <div className="flex items-center">
             {session && (
-              <div className="ml-4 flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center">
-                    <span className="text-primary-600 font-medium">
-                      {session.scannedItems}
-                    </span>
-                  </div>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-700">
-                    {session.scannedItems} / {session.boxCapacity}
-                  </p>
-                </div>
+              <div className="flex flex-col items-center">
+                <p className="text-sm font-medium text-gray-700">
+                  {session.scannedItems} / {packedBoxes}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Сканов/Коробов
+                </p>
               </div>
             )}
           </div>
