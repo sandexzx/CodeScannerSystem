@@ -95,7 +95,7 @@ export const Home = () => {
         {isScanning && (
           <div className="w-full max-w-md mb-8">
             <div className="flex justify-between text-sm text-gray-600 mb-1">
-              <span>{session?.currentBoxItems || 0} scanned</span>
+              <span>Scanned: {session?.currentBoxItems || 0}</span>
               <span>Capacity: {boxCapacity}</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2.5">
