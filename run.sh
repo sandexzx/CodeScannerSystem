@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Очистка лог-файла nohup.out
+if [ -f nohup.out ]; then
+    rm nohup.out
+fi
+
 # Запуск backend (FastAPI для сканирования)
 cd backend
 source .venv/bin/activate
