@@ -51,6 +51,14 @@ function App() {
         };
         setCurrentCode(data.result);
         setCodeHistory(prev => [newCode, ...prev].slice(0, 100));
+        
+        // Update session with incremented scannedItems
+        if (session) {
+          setSession({
+            ...session,
+            scannedItems: session.scannedItems + 1
+          });
+        }
       }
     } catch (e: any) {
       setError(e.message || 'Scan error');
