@@ -36,23 +36,23 @@ export const History = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-6 py-4 border-b border-gray-200">
-        <h2 className="text-lg font-medium text-gray-900">Scan History</h2>
-        <p className="mt-1 text-sm text-gray-500">
+      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <h2 className="text-lg font-medium text-gray-900 dark:text-white">Scan History</h2>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           View previously scanned DataMatrix codes
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
         {loading ? (
           <div className="text-center text-blue-500">Загрузка истории...</div>
         ) : error ? (
           <div className="text-center text-red-500">{error}</div>
         ) : history.length === 0 ? (
           <div className="text-center py-12">
-            <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No scan history</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No scan history</h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Scan some DataMatrix codes to see them here.
             </p>
           </div>
@@ -60,7 +60,7 @@ export const History = () => {
           <div className="space-y-8">
             {Object.entries(groupedHistory).map(([date, items]) => (
               <div key={date} className="space-y-4">
-                <h3 className="text-sm font-medium text-gray-500">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   {new Date(date).toLocaleDateString('ru-RU', {
                     weekday: 'long',
                     year: 'numeric',
@@ -68,24 +68,24 @@ export const History = () => {
                     day: 'numeric',
                   })}
                 </h3>
-                <div className="bg-white shadow overflow-hidden sm:rounded-md">
-                  <ul className="divide-y divide-gray-200">
+                <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
+                  <ul className="divide-y divide-gray-200 dark:divide-gray-700">
                     {items.map((item, idx) => (
                       <li key={`${item.Code || item.code}-${item.Timestamp || item.timestamp}-${idx}`}>
                         <div className="px-4 py-4 sm:px-6">
                           <div className="flex items-center justify-between">
-                            <p className="text-sm font-mono text-gray-900 truncate">
+                            <p className="text-sm font-mono text-gray-900 dark:text-white truncate">
                               {item.Code || item.code}
                             </p>
                             <div className="ml-2 flex-shrink-0 flex">
-                              <p className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                              <p className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100">
                                 {item.sessionId ? item.sessionId.slice(-6) : ''}
                               </p>
                             </div>
                           </div>
                           <div className="mt-2 sm:flex sm:justify-between">
                             <div className="sm:flex">
-                              <p className="flex items-center text-sm text-gray-500">
+                              <p className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                                 {(() => {
                                   const ts = item.Timestamp || item.timestamp;
                                   const date = ts ? new Date(ts) : null;

@@ -5,8 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DataMatrix Scanner</title>
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <script>
+      // Применяем тему из localStorage до загрузки React, чтобы избежать FOUC
+      (function() {
+        const theme = localStorage.getItem('theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      })();
+    </script>
   </head>
-  <body class="bg-gray-50 text-gray-900">
+  <body class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
     <div id="root" class="h-screen flex flex-col"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

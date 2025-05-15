@@ -25,22 +25,21 @@ export const Settings = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-6 py-4 border-b border-gray-200">
-        <h2 className="text-lg font-medium text-gray-900">Settings</h2>
-        <p className="mt-1 text-sm text-gray-500">
+      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <h2 className="text-lg font-medium text-gray-900 dark:text-white">Settings</h2>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Configure application settings
         </p>
       </div>
 
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-6 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-3xl mx-auto">
-          <div className="bg-white shadow overflow-hidden sm:rounded-lg
-">
+          <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">
+              <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
                 Box Capacity
               </h3>
-              <div className="mt-2 max-w-xl text-sm text-gray-500">
+              <div className="mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-400">
                 <p>
                   Set the maximum number of items that can fit in a box.
                 </p>
@@ -57,13 +56,13 @@ export const Settings = () => {
                     min="1"
                     value={capacity}
                     onChange={(e) => setCapacity(e.target.value)}
-                    className="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                    className="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md placeholder-gray-400 dark:placeholder-gray-500"
                     placeholder="e.g. 10"
                   />
                 </div>
                 <button
                   type="submit"
-                  className="mt-3 w-full inline-flex items-center justify-center px-4 py-2 border border-transparent shadow-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  className="mt-3 w-full inline-flex items-center justify-center px-4 py-2 border border-transparent shadow-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                 >
                   {showSaved ? (
                     <>
@@ -78,12 +77,12 @@ export const Settings = () => {
             </div>
           </div>
 
-          <div className="mt-8 bg-white shadow overflow-hidden sm:rounded-lg">
+          <div className="mt-8 bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">
+              <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
                 About
               </h3>
-              <div className="mt-2 max-w-xl text-sm text-gray-500">
+              <div className="mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-400">
                 <p>
                   DataMatrix Scanner v1.0.0
                 </p>

@@ -5,6 +5,7 @@ import { History } from './pages/History';
 import { Settings } from './pages/Settings';
 import { Navigation } from './components/Navigation';
 import { CodeContext } from './contexts/CodeContext';
+import { ThemeSwitcher } from './components/ThemeSwitcher';
 import { ScanSession, CodeHistoryItem } from './types';
 
 function App() {
@@ -13,24 +14,30 @@ function App() {
   const [codeHistory, setCodeHistory] = useState<CodeHistoryItem[]>([]);
   const [boxCapacity, setBoxCapacity] = useState<number>(12); // Default to 12 to match backend
   const navigate = useNavigate();
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      return savedTheme === 'dark';
+    }
+    // Если нет сохраненной темы, используем системные настройки
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
 
   // Load saved settings on initial render
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const response = await fetch('/api/settings');
-        if (response.ok) {
-          const data = await response.json();
-          setBoxCapacity(data.box_capacity);
-        } else {
-          console.error('Failed to fetch settings:', await response.text());
-        }
-      } catch (error) {
-        console.error('Failed to fetch settings:', error);
-      }
-    };
-    fetchSettings();
-  }, []);
+    // Применяем класс темы к HTML элементу
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    // Сохраняем тему в localStorage
+    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+
+  const toggleTheme = () => {
+    setIsDarkMode(prevMode => !prevMode);
+  };
 
   // Handle new scan
   const [loading, setLoading] = useState<boolean>(false);
@@ -204,13 +211,18 @@ function App() {
       onUpdateBoxCapacity: updateBoxCapacity
     }}>
       <div className="flex flex-col h-screen">
-        <header className="bg-white border-b border-gray-200 px-6 py-4">
-          <h1 className="text-2xl font-semibold text-gray-900">DataMatrix Scanner</h1>
+        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">DataMatrix Scanner</h1>
+            <ThemeSwitcher isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
+          </div>
           {session && (
-            <div className="mt-2 text-sm text-gray-500">
+            <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
               Session: {new Date(session.startTime).toLocaleString()} • 
               <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
-                session.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                session.status === 'active' 
+                  ? 'bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100' 
+                  : 'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-100'
               }`}>
                 {session.status.toUpperCase()}
               </span>
@@ -220,7 +232,7 @@ function App() {
           {error && <div className="text-red-500 mt-2">{error}</div>}
         </header>
         
-        <main className="flex-1 overflow-hidden">
+        <main className="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/history" element={<History />} />
