@@ -24,6 +24,13 @@ export const Home = () => {
     }
   }, []);
 
+  // Focus the input when session becomes active
+  useEffect(() => {
+    if (session?.status === 'active' && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [session?.status]);
+
   // Handle barcode scanning
   const handleScan = (e: React.FormEvent) => {
     e.preventDefault();
