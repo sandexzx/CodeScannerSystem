@@ -9,7 +9,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ isDarkMode, toggle
   return (
     <button
       onClick={toggleTheme}
-      className="relative p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-all duration-300 ease-in-out overflow-hidden"
+      className="relative p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 ease-in-out overflow-hidden focus:outline-none"
       aria-label={isDarkMode ? "Переключить на светлую тему" : "Переключить на темную тему"}
       style={{ width: '40px', height: '40px' }} // Фиксированный размер для корректного позиционирования иконки
     >
