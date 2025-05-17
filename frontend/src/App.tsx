@@ -180,11 +180,9 @@ function App() {
           const err = await response.json();
           throw new Error(err.error || 'Failed to complete session');
         }
-        setSession({
-          ...session,
-          status: 'completed',
-          endTime: new Date().toISOString()
-        });
+        setSession(null);
+        setCurrentCode('');
+        setCodeHistory([]);
       } catch (e: any) {
         setError(e.message || 'Failed to complete session');
       }
