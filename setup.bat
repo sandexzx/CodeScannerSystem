@@ -3,21 +3,17 @@
 REM === Backend Python setup ===
 cd backend
 
-REM Check if virtual environment exists
-if exist .venv (
-    echo Python virtual environment found in backend\.venv
-) else if exist venv (
-    echo Python virtual environment found in backend\venv
-) else if exist env (
-    echo Python virtual environment found in backend\env
-) else (
+REM Check and create virtual environment
+if not exist .venv (
     echo Creating Python virtual environment in backend\.venv...
     python -m venv .venv
+) else (
+    echo Python virtual environment found in backend\.venv
 )
 
-REM Install requirements using venv's pip
+REM Install dependencies
 if exist requirements.txt (
-    echo Installing Python dependencies from requirements.txt in virtual environment...
+    echo Installing Python dependencies from requirements.txt...
     .venv\Scripts\pip.exe install -r requirements.txt
 ) else (
     echo requirements.txt not found in backend. Skipping Python dependencies installation.

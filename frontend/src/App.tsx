@@ -23,6 +23,22 @@ function App() {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
+  // Load initial settings from backend
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const response = await fetch('http://localhost:5001/api/settings');
+        if (response.ok) {
+          const data = await response.json();
+          setBoxCapacity(data.box_capacity);
+        }
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      }
+    };
+    loadSettings();
+  }, []);
+
   // Load saved settings on initial render
   useEffect(() => {
     // Применяем класс темы к HTML элементу
