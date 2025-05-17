@@ -13,7 +13,6 @@ export const Home = () => {
     boxCapacity,
   } = useCodeContext();
   
-  const [isScanning, setIsScanning] = useState(false);
   const [scanInput, setScanInput] = useState('');
   const [isAdminMode, setIsAdminMode] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -68,7 +67,6 @@ export const Home = () => {
   // Start a new scanning session
   const startSession = () => {
     onStartSession();
-    setIsScanning(true);
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -77,7 +75,6 @@ export const Home = () => {
   // Continue existing session
   const continueExistingSession = async () => {
     await onContinueSession();
-    setIsScanning(true);
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -86,7 +83,6 @@ export const Home = () => {
   // Complete the current session
   const completeSession = () => {
     onCompleteSession();
-    setIsScanning(false);
     setIsAdminMode(false);
   };
 
@@ -96,6 +92,8 @@ export const Home = () => {
       ? 100 // Show full progress when box is full (currentBoxItems is 0 but we have scanned items)
       : (session.currentBoxItems / boxCapacity) * 100
   ) : 0;
+
+  const isScanning = session?.status === 'active';
 
   return (
     <div className="flex flex-col h-full">
@@ -152,8 +150,8 @@ export const Home = () => {
               type="text"
               value={scanInput}
               onChange={(e) => setScanInput(e.target.value)}
-              disabled={!isScanning}
               placeholder={isScanning ? "Enter or scan a code..." : "Start a session to scan"}
+              disabled={!isScanning}
               className="flex-1 min-w-0 block w-full px-4 py-3 rounded-l-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary-500 focus:border-primary-500 sm:text-sm placeholder-gray-400 dark:placeholder-gray-500"
             />
             <button
