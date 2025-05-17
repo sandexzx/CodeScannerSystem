@@ -115,6 +115,30 @@ def get_history():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/settings/clear-export', methods=['POST'])
+def clear_export_folder():
+    try:
+        # Get the export directories from config
+        config = load_config()
+        excel_dir = os.path.dirname(config['export_file'])
+        json_dir = config['json_export_dir']
+        
+        # Clear Excel directory
+        for file in os.listdir(excel_dir):
+            file_path = os.path.join(excel_dir, file)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+                
+        # Clear JSON directory
+        for file in os.listdir(json_dir):
+            file_path = os.path.join(json_dir, file)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+                
+        return jsonify({"status": "success", "message": "Export folders cleared successfully"})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Flask API server')
     parser.add_argument('--port', type=int, default=5001, help='Port to run the server on')

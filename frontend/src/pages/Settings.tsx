@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useCodeContext } from '../contexts/CodeContext';
-import { Cog6ToothIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { Cog6ToothIcon, CheckCircleIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 export const Settings = () => {
-  const { boxCapacity, onUpdateBoxCapacity } = useCodeContext();
+  const { boxCapacity, onUpdateBoxCapacity, session } = useCodeContext();
   const [capacity, setCapacity] = useState(boxCapacity.toString());
   const [showSaved, setShowSaved] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [clearError, setClearError] = useState<string | null>(null);
 
   // Update local state when boxCapacity changes
   useEffect(() => {
@@ -23,6 +25,26 @@ export const Settings = () => {
     }
   };
 
+  // Handle clear export
+  const handleClearExport = async () => {
+    try {
+      const response = await fetch('http://localhost:5001/api/settings/clear-export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to clear export folders');
+      }
+      
+      setShowConfirmDialog(false);
+      setClearError(null);
+    } catch (error: any) {
+      setClearError(error.message);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
@@ -33,7 +55,7 @@ export const Settings = () => {
       </div>
 
       <div className="flex-1 p-6 bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto space-y-6">
           <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
@@ -44,7 +66,7 @@ export const Settings = () => {
                   Set the maximum number of items that can fit in a box.
                 </p>
               </div>
-              <form onSubmit={handleSave} className="mt-5 sm:flex sm:items-center">
+              <form onSubmit={handleSave} className="mt-5">
                 <div className="w-full sm:max-w-xs">
                   <label htmlFor="capacity" className="sr-only">
                     Box Capacity
@@ -77,7 +99,41 @@ export const Settings = () => {
             </div>
           </div>
 
-          <div className="mt-8 bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
+          <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
+            <div className="px-4 py-5 sm:p-6">
+              <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                Export Management
+              </h3>
+              <div className="mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-400">
+                <p>
+                  Clear all exported files from the export folders. This action cannot be undone.
+                </p>
+                {session && (
+                  <p className="mt-2 text-yellow-600 dark:text-yellow-400">
+                    ⚠️ Cannot clear export folders while a scanning session is active. Please complete the current session first.
+                  </p>
+                )}
+                {clearError && (
+                  <p className="mt-2 text-red-600 dark:text-red-400">
+                    Error: {clearError}
+                  </p>
+                )}
+              </div>
+              <div className="mt-5">
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmDialog(true)}
+                  disabled={!!session}
+                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <TrashIcon className="-ml-1 mr-2 h-5 w-5" />
+                  Clear Export Folders
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
                 About
@@ -94,6 +150,37 @@ export const Settings = () => {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      {showConfirmDialog && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+              Confirm Clear Export Folders
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              This action will permanently delete all files in the export folders. This cannot be undone.
+              Please make sure you have saved any important data before proceeding.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => setShowConfirmDialog(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleClearExport}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md"
+              >
+                Clear Export Folders
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
