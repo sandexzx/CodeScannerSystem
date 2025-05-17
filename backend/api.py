@@ -51,7 +51,7 @@ def scan_code():
             
         handler = ScannerHandler(start_new_session=False)
         result = handler.process_code(data['code'])
-        if result:
+        if result is not False:
             return jsonify({"result": result})
         return jsonify({'error': 'Invalid code'}), 400
     except Exception as e:
@@ -100,6 +100,20 @@ def complete_session():
     # This endpoint is currently a placeholder as the session completion
     # is handled by the frontend state management
     return jsonify({"status": "success"})
+
+@app.route('/api/history', methods=['GET'])
+def get_history():
+    try:
+        handler = ScannerHandler(start_new_session=False)
+        json_path = handler.get_latest_json_file()
+        if not json_path or not os.path.exists(json_path):
+            return jsonify([])
+            
+        with open(json_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Flask API server')

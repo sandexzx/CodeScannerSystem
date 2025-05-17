@@ -6,15 +6,21 @@ import { DocumentTextIcon } from '@heroicons/react/24/outline';
 
 import { useEffect, useState } from 'react';
 
+interface HistoryItem {
+  'Box Number': number;
+  'Code': string;
+  'Timestamp': string;
+}
+
 export const History = () => {
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetch('http://localhost:8000/history')
+    fetch('http://localhost:5001/api/history')
       .then(res => {
         if (!res.ok) throw new Error('Ошибка загрузки истории');
         return res.json();
@@ -26,11 +32,15 @@ export const History = () => {
 
   // Group history by date
   const groupedHistory = history.reduce((acc, item) => {
-    const date = new Date(item.Timestamp || item.timestamp).toLocaleDateString('ru-RU');
-    if (!acc[date]) {
-      acc[date] = [];
+    const timestamp = item.Timestamp;
+    const date = timestamp ? new Date(timestamp) : null;
+    const dateStr = date && !isNaN(date.getTime()) 
+      ? format(date, 'yyyy-MM-dd', { locale: ru })
+      : 'Без даты';
+    if (!acc[dateStr]) {
+      acc[dateStr] = [];
     }
-    acc[date].push(item);
+    acc[dateStr].push(item);
     return acc;
   }, {} as Record<string, typeof history>);
 
@@ -61,25 +71,23 @@ export const History = () => {
             {Object.entries(groupedHistory).map(([date, items]) => (
               <div key={date} className="space-y-4">
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  {new Date(date).toLocaleDateString('ru-RU', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
+                  {date === 'Без даты' ? date : format(new Date(date), 'EEEE, d MMMM yyyy', { locale: ru })}
                 </h3>
                 <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
                   <ul className="divide-y divide-gray-200 dark:divide-gray-700">
                     {items.map((item, idx) => (
-                      <li key={`${item.Code || item.code}-${item.Timestamp || item.timestamp}-${idx}`}>
+                      <li key={`${item.Code}-${item.Timestamp}-${idx}`}>
                         <div className="px-4 py-4 sm:px-6">
                           <div className="flex items-center justify-between">
                             <p className="text-sm font-mono text-gray-900 dark:text-white truncate">
-                              {item.Code || item.code}
+                              {item.Code}
                             </p>
                             <div className="ml-2 flex-shrink-0 flex">
                               <p className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100">
-                                {item.sessionId ? item.sessionId.slice(-6) : ''}
+                                {item['Box Number']}
+                              </p>
+                              <p className="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100">
+                                Valid
                               </p>
                             </div>
                           </div>
@@ -87,8 +95,7 @@ export const History = () => {
                             <div className="sm:flex">
                               <p className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                                 {(() => {
-                                  const ts = item.Timestamp || item.timestamp;
-                                  const date = ts ? new Date(ts) : null;
+                                  const date = item.Timestamp ? new Date(item.Timestamp) : null;
                                   return date && !isNaN(date.getTime())
                                     ? format(date, 'HH:mm:ss', { locale: ru })
                                     : '—';
