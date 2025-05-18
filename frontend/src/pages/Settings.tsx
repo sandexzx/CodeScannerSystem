@@ -66,35 +66,40 @@ export const Settings = () => {
                   Set the maximum number of items that can fit in a box.
                 </p>
               </div>
-              <form onSubmit={handleSave} className="mt-5">
+              
+              <form onSubmit={handleSave} className="mt-6">
                 <div className="w-full sm:max-w-xs">
-                  <label htmlFor="capacity" className="sr-only">
+                  <label htmlFor="capacity" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Box Capacity
                   </label>
-                  <input
-                    type="number"
-                    name="capacity"
-                    id="capacity"
-                    min="1"
-                    value={capacity}
-                    onChange={(e) => setCapacity(e.target.value)}
-                    className="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md placeholder-gray-400 dark:placeholder-gray-500"
-                    placeholder="e.g. 10"
-                  />
+                  <div className="relative rounded-md shadow-sm">
+                    <input
+                      type="number"
+                      name="capacity"
+                      id="capacity"
+                      min="1"
+                      value={capacity}
+                      onChange={(e) => setCapacity(e.target.value)}
+                      className="block w-full px-4 py-3 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition-colors duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      placeholder="e.g. 10"
+                    />
+                  </div>
                 </div>
-                <button
-                  type="submit"
-                  className="mt-3 w-full inline-flex items-center justify-center px-4 py-2 border border-transparent shadow-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                >
-                  {showSaved ? (
-                    <>
-                      <CheckCircleIcon className="-ml-1 mr-2 h-5 w-5 text-green-400" />
-                      Saved
-                    </>
-                  ) : (
-                    'Save'
-                  )}
-                </button>
+                <div className="mt-4">
+                  <button
+                    type="submit"
+                    className="inline-flex items-center justify-center px-4 py-2 border border-transparent shadow-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800 sm:text-sm transition-colors duration-200"
+                  >
+                    {showSaved ? (
+                      <>
+                        <CheckCircleIcon className="-ml-1 mr-2 h-5 w-5 text-green-400" />
+                        Saved
+                      </>
+                    ) : (
+                      'Save'
+                    )}
+                  </button>
+                </div>
               </form>
             </div>
           </div>
