@@ -11,10 +11,11 @@ export const Home = () => {
     onContinueSession,
     onCompleteSession,
     boxCapacity,
+    isAdminMode,
+    setIsAdminMode
   } = useCodeContext();
   
   const [scanInput, setScanInput] = useState('');
-  const [isAdminMode, setIsAdminMode] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Focus the input when the component mounts

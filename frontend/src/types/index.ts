@@ -19,6 +19,8 @@ export interface CodeContextType {
   session: ScanSession | null;
   codeHistory: CodeHistoryItem[];
   boxCapacity: number;
+  isAdminMode: boolean;
+  setIsAdminMode: (isAdmin: boolean) => void;
   onNewScan: (code: string) => void;
   onStartSession: () => void;
   onContinueSession: () => void;

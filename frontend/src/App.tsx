@@ -13,6 +13,7 @@ function App() {
   const [session, setSession] = useState<ScanSession | null>(null);
   const [codeHistory, setCodeHistory] = useState<CodeHistoryItem[]>([]);
   const [boxCapacity, setBoxCapacity] = useState<number>(12); // Default to 12 to match backend
+  const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
   const navigate = useNavigate();
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -218,6 +219,8 @@ function App() {
       session, 
       codeHistory, 
       boxCapacity,
+      isAdminMode,
+      setIsAdminMode,
       onNewScan: handleNewScan,
       onStartSession: startNewSession,
       onContinueSession: continueSession,
