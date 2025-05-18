@@ -30,8 +30,15 @@ export const History = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  // Sort history by timestamp in reverse chronological order
+  const sortedHistory = [...history].sort((a, b) => {
+    const dateA = new Date(a.Timestamp);
+    const dateB = new Date(b.Timestamp);
+    return dateB.getTime() - dateA.getTime();
+  });
+
   // Group history by date
-  const groupedHistory = history.reduce((acc, item) => {
+  const groupedHistory = sortedHistory.reduce((acc, item) => {
     const timestamp = item.Timestamp;
     const date = timestamp ? new Date(timestamp) : null;
     const dateStr = date && !isNaN(date.getTime()) 
