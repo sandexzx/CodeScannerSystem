@@ -14,6 +14,7 @@ function App() {
   const [codeHistory, setCodeHistory] = useState<CodeHistoryItem[]>([]);
   const [boxCapacity, setBoxCapacity] = useState<number>(12); // Default to 12 to match backend
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -94,6 +95,9 @@ function App() {
 
   // Новый handleNewScan: отправляет запрос на backend
   const handleNewScan = async (code: string) => {
+    if (isProcessing) return; // Блокируем новый сканирование если предыдущий код еще обрабатывается
+    
+    setIsProcessing(true);
     setLoading(true);
     setError(null);
     try {
@@ -129,11 +133,15 @@ function App() {
             currentBoxItems: isBoxFull ? 0 : newCurrentBoxItems // Reset current box items if box is full
           });
         }
+        
+        // Добавляем небольшую задержку перед разблокировкой
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
     } catch (e: any) {
       setError(e.message || 'Scan error');
     } finally {
       setLoading(false);
+      setIsProcessing(false);
     }
   };
 
@@ -220,6 +228,7 @@ function App() {
       codeHistory, 
       boxCapacity,
       isAdminMode,
+      isProcessing,
       setIsAdminMode,
       onNewScan: handleNewScan,
       onStartSession: startNewSession,

@@ -20,6 +20,7 @@ export interface CodeContextType {
   codeHistory: CodeHistoryItem[];
   boxCapacity: number;
   isAdminMode: boolean;
+  isProcessing: boolean;
   setIsAdminMode: (isAdmin: boolean) => void;
   onNewScan: (code: string) => void;
   onStartSession: () => void;
