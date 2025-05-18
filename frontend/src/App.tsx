@@ -225,13 +225,13 @@ function App() {
       onUpdateBoxCapacity: updateBoxCapacity
     }}>
       <div className="flex flex-col h-screen">
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 h-[104px]">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">DataMatrix Scanner</h1>
             <ThemeSwitcher isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
           </div>
           {session && (
-            <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            <div className="mt-2 text-sm text-gray-500 dark:text-gray-400 h-[32px] flex items-center">
               Session: {new Date(session.startTime).toLocaleString()} • 
               <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
                 session.status === 'active' 
@@ -240,13 +240,21 @@ function App() {
               }`}>
                 {session.status.toUpperCase()}
               </span>
+              {loading && (
+                <span className="ml-2 inline-flex items-center px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-700 dark:text-blue-100 animate-pulse">
+                  <span className="relative flex h-2 w-2 mr-1">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                  </span>
+                  Scanning...
+                </span>
+              )}
             </div>
           )}
-          {loading && <div className="text-blue-500 mt-2">Scanning...</div>}
           {error && <div className="text-red-500 mt-2">{error}</div>}
         </header>
         
-        <main className="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900">
+        <main className="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900 pt-2">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/history" element={<History />} />
