@@ -239,18 +239,18 @@ function App() {
       <div className="flex flex-col h-screen">
         <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 h-[104px]">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">DataMatrix Scanner</h1>
+            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Сканер DataMatrix</h1>
             <ThemeSwitcher isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
           </div>
           {session && (
             <div className="mt-2 text-sm text-gray-500 dark:text-gray-400 h-[32px] flex items-center">
-              Session: {new Date(session.startTime).toLocaleString()} • 
+              Сессия: {new Date(session.startTime).toLocaleString()} • 
               <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
                 session.status === 'active' 
                   ? 'bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100' 
                   : 'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-100'
               }`}>
-                {session.status.toUpperCase()}
+                {session.status === 'active' ? 'АКТИВНА' : session.status === 'completed' ? 'ЗАВЕРШЕНА' : 'ОТМЕНЕНА'}
               </span>
               {loading && (
                 <span className="ml-2 inline-flex items-center px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-700 dark:text-blue-100 animate-pulse">
@@ -258,7 +258,7 @@ function App() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
                   </span>
-                  Scanning...
+                  Сканирование...
                 </span>
               )}
             </div>

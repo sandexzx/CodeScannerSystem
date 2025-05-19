@@ -7,9 +7,9 @@ export const Navigation = () => {
   const { session } = useCodeContext();
 
   const navItems = [
-    { name: 'Scanner', path: '/', icon: HomeIcon },
-    { name: 'History', path: '/history', icon: ClockIcon },
-    { name: 'Settings', path: '/settings', icon: Cog6ToothIcon },
+    { name: 'Сканер', path: '/', icon: HomeIcon },
+    { name: 'История', path: '/history', icon: ClockIcon },
+    { name: 'Настройки', path: '/settings', icon: Cog6ToothIcon },
   ];
 
   // Calculate packed boxes based on scanned items and box capacity

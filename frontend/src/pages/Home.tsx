@@ -120,8 +120,8 @@ export const Home = () => {
         {/* Current code display */}
         <div className="w-full max-w-2xl mb-8">
           <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
-            {isScanning ? (isProcessing ? 'PROCESSING...' : 'SCANNING') : 'READY TO SCAN'}
-            {isAdminMode && ' (ADMIN MODE)'}
+            {isScanning ? (isProcessing ? 'ОБРАБОТКА...' : 'СКАНИРОВАНИЕ') : 'ГОТОВ К СКАНИРОВАНИЮ'}
+            {isAdminMode && ' (РЕЖИМ АДМИНИСТРАТОРА)'}
           </h2>
           
           {currentCode ? (
@@ -130,15 +130,15 @@ export const Home = () => {
                 {currentCode}
               </div>
               <p className="mt-2 text-sm text-gray-500">
-                Scanned at: {new Date().toLocaleTimeString()}
+                Отсканировано в: {new Date().toLocaleTimeString()}
               </p>
             </div>
           ) : (
             <div className="bg-gray-100 dark:bg-gray-800 p-12 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700">
               <p className="text-gray-400 dark:text-gray-500">
                 {isScanning 
-                  ? 'Scan a DataMatrix code...' 
-                  : 'Start a new session to begin scanning'}
+                  ? 'Отсканируйте DataMatrix код...' 
+                  : 'Начните новую сессию для сканирования'}
               </p>
             </div>
           )}
@@ -148,8 +148,8 @@ export const Home = () => {
         {isScanning && (
           <div className="w-full max-w-md mb-8">
             <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-1">
-              <span>Scanned: {session?.currentBoxItems || 0}</span>
-              <span>Capacity: {boxCapacity}</span>
+              <span>Отсканировано: {session?.currentBoxItems || 0}</span>
+              <span>Вместимость: {boxCapacity}</span>
             </div>
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
               <div 
@@ -168,7 +168,7 @@ export const Home = () => {
               type="text"
               value={scanInput}
               onChange={(e) => setScanInput(e.target.value)}
-              placeholder={isScanning ? (isProcessing ? "Processing..." : "Enter or scan a code...") : "Start a session to scan"}
+              placeholder={isScanning ? (isProcessing ? "Обработка..." : "Введите или отсканируйте код...") : "Начните сессию для сканирования"}
               disabled={!isScanning || isProcessing}
               className="flex-1 min-w-0 block w-full px-4 py-3 rounded-l-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary-500 focus:border-primary-500 sm:text-sm placeholder-gray-400 dark:placeholder-gray-500"
             />
@@ -177,7 +177,7 @@ export const Home = () => {
               disabled={!isScanning || !scanInput.trim() || isProcessing}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Add
+              Добавить
             </button>
             {isAdminMode && (
               <button
@@ -186,7 +186,7 @@ export const Home = () => {
                 disabled={isProcessing}
                 className="ml-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Simulate Scan
+                Имитировать сканирование
               </button>
             )}
           </div>
@@ -203,14 +203,14 @@ export const Home = () => {
                 className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
               >
                 <ArrowPathIcon className="-ml-1 mr-2 h-5 w-5" />
-                Continue Session
+                Продолжить сессию
               </button>
               <button
                 onClick={startSession}
                 className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800"
               >
                 <PlayIcon className="-ml-1 mr-2 h-5 w-5" />
-                Start New Session
+                Начать новую сессию
               </button>
             </>
           ) : (
@@ -220,7 +220,7 @@ export const Home = () => {
                 className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800"
               >
                 <StopIcon className="-ml-1 mr-2 h-5 w-5" />
-                Complete Session
+                Завершить сессию
               </button>
             </>
           )}

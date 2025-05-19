@@ -48,9 +48,9 @@ export const Settings = () => {
   return (
     <div className="flex flex-col h-full">
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-lg font-medium text-gray-900 dark:text-white">Settings</h2>
+        <h2 className="text-lg font-medium text-gray-900 dark:text-white">Настройки</h2>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Configure application settings
+          Настройка параметров приложения
         </p>
       </div>
 
@@ -59,18 +59,18 @@ export const Settings = () => {
           <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
-                Box Capacity
+                Вместимость коробки
               </h3>
               <div className="mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-400">
                 <p>
-                  Set the maximum number of items that can fit in a box.
+                  Установите максимальное количество предметов, которые могут поместиться в коробку.
                 </p>
               </div>
               
               <form onSubmit={handleSave} className="mt-6">
                 <div className="w-full sm:max-w-xs">
                   <label htmlFor="capacity" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Box Capacity
+                    Вместимость коробки
                   </label>
                   <div className="relative rounded-md shadow-sm">
                     <input
@@ -81,7 +81,7 @@ export const Settings = () => {
                       value={capacity}
                       onChange={(e) => setCapacity(e.target.value)}
                       className="block w-full px-4 py-3 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition-colors duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      placeholder="e.g. 10"
+                      placeholder="например: 10"
                     />
                   </div>
                 </div>
@@ -96,7 +96,7 @@ export const Settings = () => {
                         Saved
                       </>
                     ) : (
-                      'Save'
+                      'Сохранить'
                     )}
                   </button>
                 </div>
@@ -107,20 +107,20 @@ export const Settings = () => {
           <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
-                Export Management
+                Управление экспортом
               </h3>
               <div className="mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-400">
                 <p>
-                  Clear all exported files from the export folders. This action cannot be undone.
+                  Очистить все экспортированные файлы из папок экспорта. Это действие нельзя отменить.
                 </p>
                 {session && (
                   <p className="mt-2 text-yellow-600 dark:text-yellow-400">
-                    ⚠️ Cannot clear export folders while a scanning session is active. Please complete the current session first.
+                    ⚠️ Невозможно очистить папки экспорта во время активной сессии сканирования. Пожалуйста, завершите текущую сессию.
                   </p>
                 )}
                 {clearError && (
                   <p className="mt-2 text-red-600 dark:text-red-400">
-                    Error: {clearError}
+                    Ошибка: {clearError}
                   </p>
                 )}
               </div>
@@ -132,7 +132,7 @@ export const Settings = () => {
                   className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <TrashIcon className="-ml-1 mr-2 h-5 w-5" />
-                  Clear Export Folders
+                  Очистить папки экспорта
                 </button>
               </div>
             </div>
@@ -141,14 +141,14 @@ export const Settings = () => {
           <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
-                About
+                О программе
               </h3>
               <div className="mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-400">
                 <p>
-                  DataMatrix Scanner v1.0.0
+                  Сканер DataMatrix
                 </p>
                 <p className="mt-2">
-                  A modern interface for scanning and managing DataMatrix codes.
+                  Современный интерфейс для сканирования и управления кодами DataMatrix.
                 </p>
               </div>
             </div>
@@ -161,11 +161,11 @@ export const Settings = () => {
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-              Confirm Clear Export Folders
+              Подтверждение очистки папок экспорта
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              This action will permanently delete all files in the export folders. This cannot be undone.
-              Please make sure you have saved any important data before proceeding.
+              Это действие навсегда удалит все файлы в папках экспорта. Это нельзя отменить.
+              Пожалуйста, убедитесь, что вы сохранили все важные данные перед продолжением.
             </p>
             <div className="flex justify-end space-x-3">
               <button
@@ -173,14 +173,14 @@ export const Settings = () => {
                 onClick={() => setShowConfirmDialog(false)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md"
               >
-                Cancel
+                Отмена
               </button>
               <button
                 type="button"
                 onClick={handleClearExport}
                 className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md"
               >
-                Clear Export Folders
+                Очистить
               </button>
             </div>
           </div>
