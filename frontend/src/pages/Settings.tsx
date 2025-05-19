@@ -54,7 +54,7 @@ export const Settings = () => {
         </p>
       </div>
 
-      <div className="flex-1 p-6 bg-gray-50 dark:bg-gray-900">
+      <div className="flex-1 p-6 bg-gray-50 dark:bg-gray-900 overflow-y-auto">
         <div className="max-w-3xl mx-auto space-y-6">
           <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:p-6">
