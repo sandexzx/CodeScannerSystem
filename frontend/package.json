@@ -2,11 +2,11 @@
   "name": "datamatrix-scanner",
   "version": "1.0.0",
   "private": true,
-  "main": "main.js",
+  "main": "dist/electron/main.js",
   "homepage": "./",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc -p tsconfig.electron.json && tsc && vite build",
     "preview": "vite preview",
     "electron:dev": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && electron --no-sandbox .\"",
     "electron:build": "npm run build && electron-builder"
