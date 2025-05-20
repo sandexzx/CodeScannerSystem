@@ -9,17 +9,19 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr "LISTENING" ^| findstr ":5001
     )
 )
 
+echo Starting all services in a single terminal...
+
 REM Start backend (FastAPI for scanning)
 cd backend
-start "FastAPI Backend" cmd /k "call .venv\Scripts\activate.bat && python -m uvicorn api_main:app --reload --host 127.0.0.1 --port 8000"
+start /b cmd /c "call .venv\Scripts\activate.bat && python -m uvicorn api_main:app --reload --host 127.0.0.1 --port 8000"
 cd ..
 
 REM Start backend (Flask for settings)
 cd backend
-start "Flask Backend" cmd /k "call .venv\Scripts\activate.bat && python api.py --port 5001 --host 127.0.0.1"
+start /b cmd /c "call .venv\Scripts\activate.bat && python api.py --port 5001 --host 127.0.0.1"
 cd ..
 
-REM Wait for Flask to start (increased wait time and multiple retries)
+REM Wait for Flask to start
 echo Waiting for Flask server to start...
 set /a retries=0
 :check_flask
@@ -39,7 +41,9 @@ if errorlevel 1 (
 
 REM Start frontend
 cd frontend
-start "Frontend" cmd /k "npm run dev"
+start /b cmd /c "npm run dev"
 cd ..
 
-echo All services started. Press Ctrl+C in each window to stop the services.
+echo All services started in background.
+echo Press Ctrl+C to stop all services.
+pause
