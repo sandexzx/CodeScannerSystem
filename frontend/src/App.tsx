@@ -100,12 +100,19 @@ function App() {
     setIsProcessing(true);
     setLoading(true);
     setError(null);
+
+    // Сразу разблокируем ввод после отправки запроса
+    const responsePromise = fetch('http://localhost:5001/api/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+
+    // Разблокируем ввод сразу
+    setIsProcessing(false);
+    
     try {
-      const response = await fetch('http://localhost:5001/api/scan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code })
-      });
+      const response = await responsePromise;
       if (!response.ok) {
         const err = await response.json();
         throw new Error(err.error || 'Scan failed');
@@ -122,23 +129,27 @@ function App() {
         setCurrentCode(data.result);
         setCodeHistory(prev => [newCode, ...prev].slice(0, 100));
         
-        // Update session with incremented counters
-        if (session) {
-          const newCurrentBoxItems = session.currentBoxItems + 1;
-          const isBoxFull = newCurrentBoxItems >= session.boxCapacity;
-          
-          setSession({
-            ...session,
-            scannedItems: session.scannedItems + 1,
-            currentBoxItems: isBoxFull ? 0 : newCurrentBoxItems // Reset current box items if box is full
-          });
+        // Синхронизируем состояние с бэкендом
+        const syncResponse = await fetch('http://localhost:5001/api/continue-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (syncResponse.ok) {
+          const syncData = await syncResponse.json();
+          if (session) {
+            setSession({
+              ...session,
+              scannedItems: syncData.scannedItems,
+              currentBoxItems: syncData.currentBoxItems
+            });
+          }
         }
       }
     } catch (e: any) {
       setError(e.message || 'Scan error');
     } finally {
       setLoading(false);
-      setIsProcessing(false);
     }
   };
 

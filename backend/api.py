@@ -78,10 +78,11 @@ def continue_session():
         if not handler.current_json_file:
             return jsonify({'error': 'No existing session found'}), 404
         
+        # Быстрое чтение последних данных из JSON файла
         with open(handler.current_json_file, 'r') as f:
             data = json.load(f)
             
-        # Calculate current session stats
+        # Быстрый подсчет статистики
         scanned_items = len(data)
         current_box_items = len([item for item in data if item['Box Number'] == handler.box_number])
         

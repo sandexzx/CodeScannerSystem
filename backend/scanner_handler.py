@@ -207,28 +207,32 @@ class ScannerHandler:
         self.current_box.append(code)
         self.processed_codes.add(code)
         
-        # Воспроизводим звук успеха асинхронно
-        import threading
-        threading.Thread(target=self.play_sound, args=(self.sound_success,)).start()
+        # Запускаем все асинхронные операции в одном потоке
+        def async_operations():
+            # Воспроизводим звук успеха
+            self.play_sound(self.sound_success)
+            
+            # Сохраняем данные
+            self.save_json_data(code)
+            self.save_box_data()
+            
+            # Проверяем заполнение коробки
+            if len(self.current_box) >= box_capacity:
+                self.play_sound(self.sound_box_full)
+                console.print(Panel.fit(
+                    f"[bold red]Коробка {self.box_number} заполнена![/bold red]",
+                    border_style="red"
+                ))
+                self.create_new_box()
         
+        # Запускаем все асинхронные операции в отдельном потоке
+        import threading
+        threading.Thread(target=async_operations).start()
+        
+        # Сразу возвращаем результат
         element_number = len(self.current_box)
         console.print(f"[green]Код добавлен в коробку {self.box_number} (элемент {element_number}/{box_capacity}): {code}[/green]")
-        
-        # Сохраняем данные асинхронно
-        threading.Thread(target=self.save_json_data, args=(code,)).start()
-        threading.Thread(target=self.save_box_data).start()
-        
-        # Check if box is full
-        if len(self.current_box) >= box_capacity:
-            # Воспроизводим звук заполнения коробки асинхронно
-            threading.Thread(target=self.play_sound, args=(self.sound_box_full,)).start()
-            console.print(Panel.fit(
-                f"[bold red]Коробка {self.box_number} заполнена![/bold red]",
-                border_style="red"
-            ))
-            self.create_new_box()
-            
-        return code  # Return the validated code instead of True
+        return code
 
     def save_json_data(self, code):
         """Save single code data to JSON file"""
