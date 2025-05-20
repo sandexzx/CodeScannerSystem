@@ -46,4 +46,10 @@ cd ..
 
 echo All services started in background.
 echo Press Ctrl+C to stop all services.
-pause
+
+REM Wait for user to press Ctrl+C
+pause > nul
+
+REM Run stop.bat before closing
+echo Running stop script...
+call stop.bat
