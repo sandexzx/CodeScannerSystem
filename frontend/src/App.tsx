@@ -133,9 +133,6 @@ function App() {
             currentBoxItems: isBoxFull ? 0 : newCurrentBoxItems // Reset current box items if box is full
           });
         }
-        
-        // Добавляем небольшую задержку перед разблокировкой
-        await new Promise(resolve => setTimeout(resolve, 300));
       }
     } catch (e: any) {
       setError(e.message || 'Scan error');

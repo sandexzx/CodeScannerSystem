@@ -174,8 +174,7 @@ class ScannerHandler:
             pygame.mixer.stop()
             # Play the new sound
             sound.play()
-            # Wait a short moment to ensure sound starts playing
-            time.sleep(0.1)
+            # Убираем задержку, так как она не нужна
         except Exception as e:
             logging.error(f"Error playing sound: {str(e)}")
 
@@ -207,18 +206,22 @@ class ScannerHandler:
         # Add code to current box
         self.current_box.append(code)
         self.processed_codes.add(code)
-        self.play_sound(self.sound_success)
+        
+        # Воспроизводим звук успеха асинхронно
+        import threading
+        threading.Thread(target=self.play_sound, args=(self.sound_success,)).start()
         
         element_number = len(self.current_box)
         console.print(f"[green]Код добавлен в коробку {self.box_number} (элемент {element_number}/{box_capacity}): {code}[/green]")
         
-        # Save to JSON and Excel after each scan
-        self.save_json_data(code)
-        self.save_box_data()
+        # Сохраняем данные асинхронно
+        threading.Thread(target=self.save_json_data, args=(code,)).start()
+        threading.Thread(target=self.save_box_data).start()
         
         # Check if box is full
         if len(self.current_box) >= box_capacity:
-            self.play_sound(self.sound_box_full)
+            # Воспроизводим звук заполнения коробки асинхронно
+            threading.Thread(target=self.play_sound, args=(self.sound_box_full,)).start()
             console.print(Panel.fit(
                 f"[bold red]Коробка {self.box_number} заполнена![/bold red]",
                 border_style="red"

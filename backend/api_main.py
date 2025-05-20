@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from scanner_handler import ScannerHandler
@@ -19,11 +19,11 @@ app.add_middleware(
 class ScanRequest(BaseModel):
     code: str
 
-# Пример endpoint для сканирования кода
+# Создаем глобальный экземпляр ScannerHandler
+scanner = ScannerHandler(start_new_session=False)
 
 @app.get("/history")
 def get_history():
-    scanner = get_scanner()
     try:
         json_path = scanner.get_latest_json_file()
         if not json_path or not os.path.exists(json_path):
@@ -35,17 +35,13 @@ def get_history():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-def get_scanner():
-    # Можно реализовать singleton или хранить в app.state
-    return ScannerHandler()
-
 @app.post("/scan")
-def scan_code(req: ScanRequest):
-    scanner = get_scanner()
-    # Здесь логика обработки кода (пример)
+async def scan_code(req: ScanRequest, background_tasks: BackgroundTasks):
     try:
         # Используем process_code для обработки кода
         result = scanner.process_code(req.code)
+        if result is False:
+            raise HTTPException(status_code=400, detail="Invalid code")
         return {"status": "ok", "result": result}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
