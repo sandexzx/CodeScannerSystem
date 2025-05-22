@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useCodeContext } from '../contexts/CodeContext';
-import { PlayIcon, StopIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
+import { PlayIcon, StopIcon, ArrowPathIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
+
+// Функция для проверки раскладки клавиатуры
+const isEnglishLayout = (text: string): boolean => {
+  // Проверяем, содержит ли текст русские буквы
+  const russianPattern = /[а-яА-ЯёЁ]/;
+  return !russianPattern.test(text);
+};
 
 export const Home = () => {
   const {
@@ -17,6 +24,7 @@ export const Home = () => {
   } = useCodeContext();
   
   const [scanInput, setScanInput] = useState('');
+  const [layoutError, setLayoutError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Focus the input when the component mounts
@@ -44,6 +52,14 @@ export const Home = () => {
   const handleScan = (e: React.FormEvent) => {
     e.preventDefault();
     if (scanInput.trim() && !isProcessing) {
+      // Проверяем раскладку клавиатуры
+      if (!isEnglishLayout(scanInput)) {
+        setLayoutError('Пожалуйста, переключите раскладку клавиатуры на английскую');
+        setScanInput('');
+        return;
+      }
+      setLayoutError(null);
+
       // Check for admin mode
       if (scanInput.trim() === 'admin') {
         setIsAdminMode(true);
@@ -124,6 +140,17 @@ export const Home = () => {
             {isAdminMode && ' (РЕЖИМ АДМИНИСТРАТОРА)'}
           </h2>
           
+          {layoutError && (
+            <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg shadow-sm">
+              <div className="flex items-center">
+                <ExclamationTriangleIcon className="h-5 w-5 text-amber-400 dark:text-amber-500 mr-3 flex-shrink-0" />
+                <p className="text-amber-800 dark:text-amber-200 font-medium">
+                  {layoutError}
+                </p>
+              </div>
+            </div>
+          )}
+
           {currentCode ? (
             <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
               <div className="text-4xl font-mono font-bold tracking-wider break-all text-gray-900 dark:text-white">
