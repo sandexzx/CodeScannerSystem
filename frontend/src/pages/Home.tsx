@@ -151,16 +151,18 @@ export const Home = () => {
             </div>
           )}
 
-          {currentCode ? (
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
-              <div className="text-4xl font-mono font-bold tracking-wider break-all text-gray-900 dark:text-white">
-                {currentCode}
+          {session && (
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 mb-8">
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                {session.scannedItems} / {Math.floor(session.scannedItems / session.boxCapacity)}
               </div>
-              <p className="mt-2 text-sm text-gray-500">
-                Отсканировано в: {new Date().toLocaleTimeString()}
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Сканов/Коробов
               </p>
             </div>
-          ) : (
+          )}
+
+          {!currentCode && (
             <div className="bg-gray-100 dark:bg-gray-800 p-12 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700">
               <p className="text-gray-400 dark:text-gray-500">
                 {isScanning 

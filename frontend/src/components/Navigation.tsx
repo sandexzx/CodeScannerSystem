@@ -1,10 +1,19 @@
 import { Link, useLocation } from 'react-router-dom';
 import { HomeIcon, ClockIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { useCodeContext } from '../contexts/CodeContext';
+import { useState, useEffect } from 'react';
 
 export const Navigation = () => {
   const location = useLocation();
-  const { session } = useCodeContext();
+  const { session, currentCode } = useCodeContext();
+  const [lastScanTime, setLastScanTime] = useState<string | null>(null);
+
+  // Update timestamp when currentCode changes
+  useEffect(() => {
+    if (currentCode) {
+      setLastScanTime(new Date().toLocaleTimeString());
+    }
+  }, [currentCode]);
 
   const navItems = [
     { name: 'Сканер', path: '/', icon: HomeIcon },
@@ -45,16 +54,30 @@ export const Navigation = () => {
               );
             })}
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center space-x-6">
             {session && (
-              <div className="flex flex-col items-center">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {session.scannedItems} / {packedBoxes}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Сканов/Коробов
-                </p>
-              </div>
+              <>
+                {currentCode && (
+                  <div className="flex flex-col items-center">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Последний код:
+                    </p>
+                    <p className="text-xs font-mono text-gray-500 dark:text-gray-400">
+                      {currentCode}
+                    </p>
+                  </div>
+                )}
+                {lastScanTime && (
+                  <div className="flex flex-col items-center">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Отсканировано в:
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {lastScanTime}
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
