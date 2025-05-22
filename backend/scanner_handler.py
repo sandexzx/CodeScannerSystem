@@ -14,6 +14,10 @@ from rich.logging import RichHandler
 from rich import print as rprint
 from datetime import datetime
 from rich.prompt import Prompt
+import pandas as pd
+import threading
+from pathlib import Path
+import msvcrt  # For Windows file locking
 
 # Configure logging with Rich
 logging.basicConfig(
@@ -98,7 +102,6 @@ class ScannerHandler:
         self.current_excel_file = os.path.join(self.excel_dir, f"{SESSION_BASE_NAME}_{timestamp}.xlsx")
         
         # Initialize Excel file with empty DataFrame
-        import pandas as pd
         df = pd.DataFrame(columns=['Box Number', 'Code', 'Timestamp'])
         df.to_excel(self.current_excel_file, index=False)
             
@@ -226,7 +229,6 @@ class ScannerHandler:
                 self.create_new_box()
         
         # Запускаем все асинхронные операции в отдельном потоке
-        import threading
         threading.Thread(target=async_operations).start()
         
         # Сразу возвращаем результат
@@ -259,37 +261,65 @@ class ScannerHandler:
         console.print(f"[blue]Код {code} сохранен в {self.current_json_file}[/blue]")
 
     def save_box_data(self):
-        """Save box data to Excel file"""
-        import pandas as pd
-        from datetime import datetime
-        
+        """Save current box data to Excel file"""
         data = {
             'Box Number': [self.box_number] * len(self.current_box),
             'Code': self.current_box,
-            'Timestamp': [datetime.now()] * len(self.current_box)
+            'Timestamp': [datetime.now().strftime('%Y-%m-%d %H:%M:%S')] * len(self.current_box)
         }
         
         df = pd.DataFrame(data)
         
-        # Save to Excel
-        try:
-            existing_df = pd.read_excel(self.current_excel_file)
-            if not existing_df.empty:
-                # Remove entries for current box if they exist
-                existing_df = existing_df[existing_df['Box Number'] != self.box_number]
-                # Only concatenate if we have data to add
-                if not df.empty:
-                    df = pd.concat([existing_df, df], ignore_index=True)
+        # Save to Excel with retry mechanism
+        max_retries = 3
+        retry_delay = 1  # seconds
+        
+        for attempt in range(max_retries):
+            try:
+                # Try to acquire file lock
+                lock_file = f"{self.current_excel_file}.lock"
+                try:
+                    with open(lock_file, 'w') as f:
+                        msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+                except IOError:
+                    time.sleep(retry_delay)
+                    continue
+
+                try:
+                    if os.path.exists(self.current_excel_file):
+                        existing_df = pd.read_excel(self.current_excel_file)
+                        if not existing_df.empty:
+                            # Remove entries for current box if they exist
+                            existing_df = existing_df[existing_df['Box Number'] != self.box_number]
+                            # Only concatenate if we have data to add
+                            if not df.empty:
+                                df = pd.concat([existing_df, df], ignore_index=True)
+                            else:
+                                df = existing_df
+                except Exception as e:
+                    console.print(f"[yellow]Предупреждение при чтении Excel: {str(e)}[/yellow]")
+                    # If we can't read the existing file, we'll just write our new data
+                
+                df.to_excel(self.current_excel_file, index=False)
+                console.print(f"[blue]Данные коробки {self.box_number} сохранены в {self.current_excel_file}[/blue]")
+                break  # Success, exit retry loop
+                
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    console.print(f"[yellow]Попытка {attempt + 1} из {max_retries} не удалась: {str(e)}[/yellow]")
+                    time.sleep(retry_delay)
                 else:
-                    df = existing_df
-        except FileNotFoundError:
-            pass
-            
-        df.to_excel(self.current_excel_file, index=False)
-        console.print(f"[blue]Данные коробки {self.box_number} сохранены в {self.current_excel_file}[/blue]")
+                    console.print(f"[red]Не удалось сохранить данные в Excel после {max_retries} попыток: {str(e)}[/red]")
+            finally:
+                # Release file lock
+                try:
+                    if os.path.exists(lock_file):
+                        os.remove(lock_file)
+                except:
+                    pass
 
     def create_new_box(self):
-        """Create a new box and save current box data"""
+        """Create a new box"""
         self.current_box = []
         self.box_number += 1
         console.print(Panel.fit(
