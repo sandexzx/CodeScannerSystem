@@ -188,36 +188,38 @@ export const Home = () => {
         )}
 
         {/* Manual input form */}
-        <form onSubmit={handleScan} className="w-full max-w-md">
-          <div className="flex rounded-md shadow-sm">
-            <input
-              ref={inputRef}
-              type="text"
-              value={scanInput}
-              onChange={(e) => setScanInput(e.target.value)}
-              placeholder={isScanning ? (isProcessing ? "Обработка..." : "Введите или отсканируйте код...") : "Начните сессию для сканирования"}
-              disabled={!isScanning || isProcessing}
-              className="flex-1 min-w-0 block w-full px-4 py-3 rounded-l-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary-500 focus:border-primary-500 sm:text-sm placeholder-gray-400 dark:placeholder-gray-500"
-            />
-            <button
-              type="submit"
-              disabled={!isScanning || !scanInput.trim() || isProcessing}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Добавить
-            </button>
-            {isAdminMode && (
+        {isScanning && (
+          <form onSubmit={handleScan} className="w-full max-w-md mt-auto">
+            <div className="flex rounded-md shadow-sm">
+              <input
+                ref={inputRef}
+                type="text"
+                value={scanInput}
+                onChange={(e) => setScanInput(e.target.value)}
+                placeholder={isScanning ? (isProcessing ? "Обработка..." : "Введите или отсканируйте код...") : "Начните сессию для сканирования"}
+                disabled={!isScanning || isProcessing}
+                className="flex-1 min-w-0 block w-full px-4 py-3 rounded-l-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary-500 focus:border-primary-500 sm:text-sm placeholder-gray-400 dark:placeholder-gray-500"
+              />
               <button
-                type="button"
-                onClick={handleAdminScan}
-                disabled={isProcessing}
-                className="ml-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                type="submit"
+                disabled={!isScanning || !scanInput.trim() || isProcessing}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Имитировать сканирование
+                Добавить
               </button>
-            )}
-          </div>
-        </form>
+              {isAdminMode && (
+                <button
+                  type="button"
+                  onClick={handleAdminScan}
+                  disabled={isProcessing}
+                  className="ml-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Имитировать сканирование
+                </button>
+              )}
+            </div>
+          </form>
+        )}
       </div>
 
       {/* Action buttons */}
