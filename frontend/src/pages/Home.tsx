@@ -151,7 +151,7 @@ export const Home = () => {
             </div>
           )}
 
-          {session && (
+          {session && currentCode && (
             <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 mb-8">
               <div className="text-2xl font-bold text-gray-900 dark:text-white">
                 {session.scannedItems} / {Math.floor(session.scannedItems / session.boxCapacity)}
