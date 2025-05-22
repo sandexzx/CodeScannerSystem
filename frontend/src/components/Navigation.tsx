@@ -59,10 +59,7 @@ export const Navigation = () => {
               <>
                 {currentCode && (
                   <div className="flex flex-col items-center">
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Последний код:
-                    </p>
-                    <p className="text-xs font-mono text-gray-500 dark:text-gray-400">
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">
                       {currentCode}
                     </p>
                   </div>
