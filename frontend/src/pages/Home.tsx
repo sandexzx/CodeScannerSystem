@@ -135,8 +135,8 @@ export const Home = () => {
       {/* Main content */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-gray-50 dark:bg-gray-900">
         {/* Main content container */}
-        <div className="w-full max-w-3xl flex flex-col items-center min-h-[600px]">
-          <div className="flex flex-col items-center justify-center flex-1 w-full">
+        <div className="w-full max-w-3xl flex flex-col items-center h-full">
+          <div className="flex flex-col items-center w-full">
             <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
               {isScanning ? (isProcessing ? 'ОБРАБОТКА...' : 'СКАНИРОВАНИЕ') : 'ГОТОВ К СКАНИРОВАНИЮ'}
               {isAdminMode && ' (РЕЖИМ АДМИНИСТРАТОРА)'}
@@ -224,20 +224,20 @@ export const Home = () => {
       </div>
 
       {/* Action buttons */}
-      <div className="p-6 bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex justify-center space-x-4">
+      <div className="sticky bottom-0 p-6 bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex flex-wrap justify-center gap-4">
           {!isScanning ? (
             <>
               <button
                 onClick={continueExistingSession}
-                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+                className="inline-flex items-center px-4 py-2 sm:px-6 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 whitespace-nowrap"
               >
                 <ArrowPathIcon className="-ml-1 mr-2 h-5 w-5" />
                 Продолжить сессию
               </button>
               <button
                 onClick={startSession}
-                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800"
+                className="inline-flex items-center px-4 py-2 sm:px-6 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800 whitespace-nowrap"
               >
                 <PlayIcon className="-ml-1 mr-2 h-5 w-5" />
                 Начать новую сессию
@@ -247,7 +247,7 @@ export const Home = () => {
             <>
               <button
                 onClick={completeSession}
-                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800"
+                className="inline-flex items-center px-4 py-2 sm:px-6 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800 whitespace-nowrap"
               >
                 <StopIcon className="-ml-1 mr-2 h-5 w-5" />
                 Завершить сессию
