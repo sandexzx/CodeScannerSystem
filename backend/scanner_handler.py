@@ -200,6 +200,12 @@ class ScannerHandler:
             self.play_sound(self.sound_error)
             return False
             
+        # Проверка на EAN-13 код (13 цифр)
+        if code.isdigit() and len(code) == 13:
+            console.print(f"[yellow]Обнаружен EAN-13 код: {code} - обрабатываем как дубликат[/yellow]")
+            self.play_sound(self.sound_error)
+            return False
+            
         # Check for duplicates
         if code in self.processed_codes:
             console.print(f"[yellow]Обнаружен дубликат кода: {code}[/yellow]")
