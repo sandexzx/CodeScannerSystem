@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useCodeContext } from '../contexts/CodeContext';
-import { PlayIcon, StopIcon, ArrowPathIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
+import { PlayIcon, StopIcon, ArrowPathIcon, ExclamationTriangleIcon, DocumentArrowDownIcon } from '@heroicons/react/24/solid';
 import { ProgressBox } from '../components/ProgressBox';
 
 // Функция для проверки раскладки клавиатуры
@@ -26,6 +26,8 @@ export const Home = () => {
   
   const [scanInput, setScanInput] = useState('');
   const [layoutError, setLayoutError] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportMessage, setExportMessage] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Focus the input when the component mounts
@@ -121,6 +123,40 @@ export const Home = () => {
     setIsAdminMode(false);
   };
 
+  // Export to Excel
+  const handleExportToExcel = async () => {
+    if (isExporting) return;
+    
+    setIsExporting(true);
+    setExportMessage(null);
+    
+    try {
+      const response = await fetch('http://localhost:5001/api/export-excel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        setExportMessage('Excel файл успешно создан!');
+      } else {
+        setExportMessage(`Ошибка: ${data.message || 'Не удалось создать Excel файл'}`);
+      }
+    } catch (error: any) {
+      setExportMessage(`Ошибка: ${error.message || 'Ошибка подключения к серверу'}`);
+    } finally {
+      setIsExporting(false);
+      
+      // Убираем сообщение через 3 секунды
+      setTimeout(() => {
+        setExportMessage(null);
+      }, 3000);
+    }
+  };
+
   // Calculate progress percentage
   const progress = session ? (
     session.currentBoxItems === 0 && session.scannedItems > 0 
@@ -150,6 +186,20 @@ export const Home = () => {
                     {layoutError}
                   </p>
                 </div>
+              </div>
+            )}
+
+            {exportMessage && (
+              <div className={`mb-4 p-4 ${exportMessage.includes('Ошибка') 
+                ? 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700' 
+                : 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-700'
+              } border rounded-lg shadow-sm w-full`}>
+                <p className={`${exportMessage.includes('Ошибка')
+                  ? 'text-red-800 dark:text-red-200'
+                  : 'text-green-800 dark:text-green-200'
+                } font-medium`}>
+                  {exportMessage}
+                </p>
               </div>
             )}
 
@@ -245,6 +295,14 @@ export const Home = () => {
             </>
           ) : (
             <>
+              <button
+                onClick={handleExportToExcel}
+                disabled={isExporting}
+                className="inline-flex items-center px-4 py-2 sm:px-6 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <DocumentArrowDownIcon className="-ml-1 mr-2 h-5 w-5" />
+                {isExporting ? 'Экспорт...' : 'Экспорт в Excel'}
+              </button>
               <button
                 onClick={completeSession}
                 className="inline-flex items-center px-4 py-2 sm:px-6 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800 whitespace-nowrap"

@@ -189,6 +189,16 @@ function App() {
   const completeSession = async () => {
     if (session) {
       try {
+        // Автоматически экспортируем в Excel при завершении сессии
+        try {
+          await fetch('http://localhost:5001/api/export-excel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+        } catch (exportError) {
+          console.warn('Auto-export to Excel failed:', exportError);
+        }
+
         const response = await fetch('http://localhost:5001/api/complete-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }

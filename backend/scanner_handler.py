@@ -221,9 +221,8 @@ class ScannerHandler:
             # Воспроизводим звук успеха
             self.play_sound(self.sound_success)
             
-            # Сохраняем данные
+            # Сохраняем только в JSON (Excel будет создаваться по требованию)
             self.save_json_data(code)
-            self.save_box_data()
             
             # Проверяем заполнение коробки
             if len(self.current_box) >= box_capacity:
@@ -243,28 +242,83 @@ class ScannerHandler:
         return code
 
     def save_json_data(self, code):
-        """Save single code data to JSON file"""
+        """Save single code data to JSON file with cross-platform file locking"""
         import json
+        import time
+        import threading
         from datetime import datetime
         
-        try:
-            with open(self.current_json_file, 'r') as f:
-                existing_data = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            existing_data = []
-            
-        # Create new entry
-        new_entry = {
-            'Box Number': self.box_number,
-            'Code': code,
-            'Timestamp': datetime.now().isoformat()
-        }
+        # Используем threading.Lock для синхронизации записи в JSON
+        if not hasattr(self, '_json_lock'):
+            self._json_lock = threading.Lock()
         
-        existing_data.append(new_entry)
+        max_retries = 5
+        retry_delay = 0.1
         
-        with open(self.current_json_file, 'w') as f:
-            json.dump(existing_data, f, indent=4)
-        console.print(f"[blue]Код {code} сохранен в {self.current_json_file}[/blue]")
+        for attempt in range(max_retries):
+            try:
+                with self._json_lock:  # Блокируем запись на уровне объекта
+                    # Создаем временный lock файл
+                    lock_file = f"{self.current_json_file}.lock"
+                    
+                    try:
+                        # Пытаемся создать lock файл (эксклюзивно)
+                        with open(lock_file, 'x') as lock_f:
+                            lock_f.write(str(os.getpid()))
+                    except FileExistsError:
+                        # Lock файл уже существует, ждем
+                        if attempt < max_retries - 1:
+                            time.sleep(retry_delay)
+                            retry_delay *= 1.5
+                            continue
+                        else:
+                            raise IOError("JSON file is locked by another process")
+                    
+                    try:
+                        # Читаем существующие данные
+                        try:
+                            with open(self.current_json_file, 'r', encoding='utf-8') as f:
+                                existing_data = json.load(f)
+                        except (FileNotFoundError, json.JSONDecodeError):
+                            existing_data = []
+                        
+                        # Добавляем новую запись
+                        new_entry = {
+                            'Box Number': self.box_number,
+                            'Code': code,
+                            'Timestamp': datetime.now().isoformat()
+                        }
+                        existing_data.append(new_entry)
+                        
+                        # Атомарно перезаписываем файл
+                        temp_file = f"{self.current_json_file}.tmp"
+                        with open(temp_file, 'w', encoding='utf-8') as f:
+                            json.dump(existing_data, f, indent=4, ensure_ascii=False)
+                        
+                        # Атомарная замена файла
+                        if os.path.exists(self.current_json_file):
+                            os.replace(temp_file, self.current_json_file)
+                        else:
+                            os.rename(temp_file, self.current_json_file)
+                        
+                    finally:
+                        # Удаляем lock файл
+                        try:
+                            os.remove(lock_file)
+                        except FileNotFoundError:
+                            pass
+                
+                console.print(f"[blue]Код {code} сохранен в {self.current_json_file}[/blue]")
+                return  # Успешно записали, выходим
+                
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    console.print(f"[yellow]Попытка {attempt + 1} записи JSON не удалась: {str(e)}. Повтор через {retry_delay:.2f}с[/yellow]")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2
+                else:
+                    console.print(f"[red]Не удалось сохранить код {code} в JSON после {max_retries} попыток: {str(e)}[/red]")
+                    raise
 
     def save_box_data(self):
         """Save current box data to Excel file"""
@@ -323,6 +377,37 @@ class ScannerHandler:
                         os.remove(lock_file)
                 except:
                     pass
+
+    def generate_excel_from_json(self):
+        """Generate Excel file from current JSON data"""
+        import json
+        from datetime import datetime
+        
+        try:
+            # Читаем данные из JSON файла
+            if not os.path.exists(self.current_json_file):
+                console.print(f"[red]JSON файл не найден: {self.current_json_file}[/red]")
+                return False
+                
+            with open(self.current_json_file, 'r') as f:
+                json_data = json.load(f)
+            
+            if not json_data:
+                console.print("[yellow]JSON файл пуст, создаем пустой Excel файл[/yellow]")
+                df = pd.DataFrame(columns=['Box Number', 'Code', 'Timestamp'])
+            else:
+                # Конвертируем JSON данные в DataFrame
+                df = pd.DataFrame(json_data)
+            
+            # Создаем Excel файл (перезаписываем если существует)
+            df.to_excel(self.current_excel_file, index=False)
+            console.print(f"[green]Excel файл создан: {self.current_excel_file}[/green]")
+            console.print(f"[blue]Записано {len(json_data)} записей[/blue]")
+            return True
+            
+        except Exception as e:
+            console.print(f"[red]Ошибка при создании Excel файла: {str(e)}[/red]")
+            return False
 
     def create_new_box(self):
         """Create a new box"""

@@ -1,5 +1,7 @@
 import json
 import os
+import time
+import logging
 
 DEFAULT_CONFIG = {
     "scanner_file_path": "scanner_data.txt",
@@ -17,18 +19,29 @@ CONFIG_FILE = "config.json"
 def load_config():
     """Load configuration from JSON file or create default if not exists"""
     if os.path.exists(CONFIG_FILE):
-        try:
-            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-                existing_config = json.load(f)
-                # Merge with default config to ensure all keys exist
-                config = DEFAULT_CONFIG.copy()
-                config.update(existing_config)
-                # Save updated config back to file
-                save_config(config)
-                return config
-        except json.JSONDecodeError:
-            print("Ошибка чтения конфигурации. Используются настройки по умолчанию.")
-            return DEFAULT_CONFIG.copy()
+        max_retries = 5
+        base_delay = 0.1  # 100ms base delay
+        
+        for attempt in range(max_retries):
+            try:
+                with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                    existing_config = json.load(f)
+                    # Merge with default config to ensure all keys exist
+                    config = DEFAULT_CONFIG.copy()
+                    config.update(existing_config)
+                    # Save updated config back to file
+                    save_config(config)
+                    return config
+            except (json.JSONDecodeError, IOError, OSError) as e:
+                if attempt < max_retries - 1:
+                    delay = base_delay * (2 ** attempt)  # Exponential backoff
+                    logging.warning(f"Попытка {attempt + 1} чтения конфигурации не удалась: {str(e)}. Повтор через {delay:.2f}с")
+                    print(f"Ошибка чтения конфигурации (попытка {attempt + 1}/{max_retries}). Повтор через {delay:.2f}с...")
+                    time.sleep(delay)
+                else:
+                    logging.error(f"Не удалось прочитать конфигурацию после {max_retries} попыток: {str(e)}. Используются настройки по умолчанию.")
+                    print(f"Критическая ошибка: не удалось прочитать конфигурацию после {max_retries} попыток. Используются настройки по умолчанию.")
+                    return DEFAULT_CONFIG.copy()
     else:
         # Create default config file
         save_config(DEFAULT_CONFIG)

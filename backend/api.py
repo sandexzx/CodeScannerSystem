@@ -140,6 +140,41 @@ def clear_export_folder():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/export-excel', methods=['POST'])
+def export_excel():
+    try:
+        handler = ScannerHandler(start_new_session=False)
+        success = handler.generate_excel_from_json()
+        
+        if success:
+            return jsonify({
+                "status": "success", 
+                "message": "Excel файл успешно создан",
+                "excel_file": handler.current_excel_file
+            })
+        else:
+            return jsonify({"status": "error", "message": "Не удалось создать Excel файл"}), 500
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/excel-status', methods=['GET'])
+def excel_status():
+    try:
+        handler = ScannerHandler(start_new_session=False)
+        excel_exists = os.path.exists(handler.current_excel_file)
+        json_exists = os.path.exists(handler.current_json_file)
+        
+        return jsonify({
+            "excel_exists": excel_exists,
+            "json_exists": json_exists,
+            "excel_file": handler.current_excel_file if excel_exists else None,
+            "json_file": handler.current_json_file if json_exists else None
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Flask API server')
     parser.add_argument('--port', type=int, default=5001, help='Port to run the server on')
