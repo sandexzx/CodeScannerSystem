@@ -2,7 +2,6 @@ import time
 import logging
 import glob
 import re
-import json
 import os
 import pygame
 from config_manager import load_config, SCANNER_FILE_PATH, SOUND_SUCCESS, SOUND_ERROR, SOUND_BOX_FULL, EXPORT_FILE, JSON_EXPORT_DIR, SESSION_BASE_NAME
@@ -52,18 +51,25 @@ class ScannerHandler:
             self.load_existing_data()
 
     def get_latest_json_file(self):
-        """Find the latest version of the JSON file"""
-        pattern = f"{self.json_base_name}_*.json"
+        """Find the latest version of the JSONL file"""
+        pattern = f"{self.json_base_name}_*.jsonl"
         files = glob.glob(pattern)
         
         if not files:
             # If no versioned files exist, check for the base file
-            base_file = f"{self.json_base_name}.json"
+            base_file = f"{self.json_base_name}.jsonl"
             if os.path.exists(base_file):
                 return base_file
+            # Also check for old .json files for backward compatibility
+            old_json_pattern = f"{self.json_base_name}_*.json"
+            old_files = glob.glob(old_json_pattern)
+            if old_files:
+                # Return the latest old JSON file
+                versions = [(os.path.getmtime(file), file) for file in old_files]
+                return max(versions, key=lambda x: x[0])[1]
             return None
             
-        # Extract version numbers and find the latest
+        # Extract modification times and find the latest
         versions = []
         for file in files:
             mod_time = os.path.getmtime(file)
@@ -72,7 +78,7 @@ class ScannerHandler:
         if not versions:
             return None
             
-        # Return the file with the highest version number
+        # Return the file with the latest modification time
         return max(versions, key=lambda x: x[0])[1]
 
     def get_latest_session_number(self):
@@ -84,18 +90,18 @@ class ScannerHandler:
         return 1 if files else 0
 
     def create_new_session(self):
-        """Create a new scanning session with new JSON and Excel files"""
+        """Create a new scanning session with new JSONL and Excel files"""
         # Create necessary directories if they don't exist
         os.makedirs(os.path.dirname(self.json_base_name), exist_ok=True)
         os.makedirs(self.excel_dir, exist_ok=True)
         
         # Получаем текущую дату и время в нужном формате
         timestamp = datetime.now().strftime("%d_%m_%y_%H_%M")
-        self.current_json_file = f"{self.json_base_name}_{timestamp}.json"
+        self.current_json_file = f"{self.json_base_name}_{timestamp}.jsonl"
         
-        # Initialize new JSON file with empty array
-        with open(self.current_json_file, 'w') as f:
-            json.dump([], f, indent=4)
+        # Initialize new JSONL file (empty file - will be appended to)
+        with open(self.current_json_file, 'w', encoding='utf-8'):
+            pass  # Create empty file
             
         # Create new Excel file for the session
         # Используем тот же timestamp для Excel файла
@@ -113,7 +119,7 @@ class ScannerHandler:
         logging.info(f"Started new session with files: {self.current_json_file} and {self.current_excel_file}")
 
     def load_existing_data(self):
-        """Load existing data from the latest JSON file and restore state"""
+        """Load existing data from the latest JSONL file and restore state"""
         import json
         
         self.current_json_file = self.get_latest_json_file()
@@ -122,9 +128,9 @@ class ScannerHandler:
             self.create_new_session()
             return
             
-        # Извлекаем дату и время из имени JSON файла
+        # Извлекаем дату и время из имени JSONL файла
         json_filename = os.path.basename(self.current_json_file)
-        match = re.search(r'_(\d{2}_\d{2}_\d{2}_\d{2}_\d{2})\.json$', json_filename)
+        match = re.search(r'_(\d{2}_\d{2}_\d{2}_\d{2}_\d{2})\.jsonl$', json_filename)
         if match:
             timestamp = match.group(1)
             # Формируем имя Excel файла с тем же таймстампом
@@ -141,8 +147,25 @@ class ScannerHandler:
                 return
             
         try:
-            with open(self.current_json_file, 'r') as f:
-                existing_data = json.load(f)
+            existing_data = []
+            
+            # Проверяем расширение файла для определения формата
+            if self.current_json_file.endswith('.jsonl'):
+                # Читаем JSONL файл построчно
+                with open(self.current_json_file, 'r', encoding='utf-8') as f:
+                    for line_num, line in enumerate(f, 1):
+                        line = line.strip()
+                        if line:  # Пропускаем пустые строки
+                            try:
+                                entry = json.loads(line)
+                                existing_data.append(entry)
+                            except json.JSONDecodeError as je:
+                                logging.warning(f"Ignoring invalid JSON on line {line_num}: {str(je)}")
+                                continue
+            else:
+                # Читаем старый JSON файл (массив объектов)
+                with open(self.current_json_file, 'r', encoding='utf-8') as f:
+                    existing_data = json.load(f)
                 
             if existing_data:
                 # Get the last box number
@@ -242,13 +265,13 @@ class ScannerHandler:
         return code
 
     def save_json_data(self, code):
-        """Save single code data to JSON file with cross-platform file locking"""
+        """Save single code data to JSONL file with append-only writes"""
         import json
         import time
         import threading
         from datetime import datetime
         
-        # Используем threading.Lock для синхронизации записи в JSON
+        # Используем threading.Lock для синхронизации записи в JSONL
         if not hasattr(self, '_json_lock'):
             self._json_lock = threading.Lock()
         
@@ -272,34 +295,20 @@ class ScannerHandler:
                             retry_delay *= 1.5
                             continue
                         else:
-                            raise IOError("JSON file is locked by another process")
+                            raise IOError("JSONL file is locked by another process")
                     
                     try:
-                        # Читаем существующие данные
-                        try:
-                            with open(self.current_json_file, 'r', encoding='utf-8') as f:
-                                existing_data = json.load(f)
-                        except (FileNotFoundError, json.JSONDecodeError):
-                            existing_data = []
-                        
-                        # Добавляем новую запись
+                        # Создаем новую запись
                         new_entry = {
                             'Box Number': self.box_number,
                             'Code': code,
                             'Timestamp': datetime.now().isoformat()
                         }
-                        existing_data.append(new_entry)
                         
-                        # Атомарно перезаписываем файл
-                        temp_file = f"{self.current_json_file}.tmp"
-                        with open(temp_file, 'w', encoding='utf-8') as f:
-                            json.dump(existing_data, f, indent=4, ensure_ascii=False)
-                        
-                        # Атомарная замена файла
-                        if os.path.exists(self.current_json_file):
-                            os.replace(temp_file, self.current_json_file)
-                        else:
-                            os.rename(temp_file, self.current_json_file)
+                        # Append-only запись в JSONL файл (одна строка = один JSON объект)
+                        with open(self.current_json_file, 'a', encoding='utf-8') as f:
+                            json.dump(new_entry, f, ensure_ascii=False)
+                            f.write('\n')  # Разделитель строк для JSONL формата
                         
                     finally:
                         # Удаляем lock файл
@@ -313,11 +322,11 @@ class ScannerHandler:
                 
             except Exception as e:
                 if attempt < max_retries - 1:
-                    console.print(f"[yellow]Попытка {attempt + 1} записи JSON не удалась: {str(e)}. Повтор через {retry_delay:.2f}с[/yellow]")
+                    console.print(f"[yellow]Попытка {attempt + 1} записи JSONL не удалась: {str(e)}. Повтор через {retry_delay:.2f}с[/yellow]")
                     time.sleep(retry_delay)
                     retry_delay *= 2
                 else:
-                    console.print(f"[red]Не удалось сохранить код {code} в JSON после {max_retries} попыток: {str(e)}[/red]")
+                    console.print(f"[red]Не удалось сохранить код {code} в JSONL после {max_retries} попыток: {str(e)}[/red]")
                     raise
 
     def save_box_data(self):
@@ -379,24 +388,40 @@ class ScannerHandler:
                     pass
 
     def generate_excel_from_json(self):
-        """Generate Excel file from current JSON data"""
+        """Generate Excel file from current JSONL data"""
         import json
-        from datetime import datetime
         
         try:
-            # Читаем данные из JSON файла
+            # Читаем данные из JSON/JSONL файла
             if not os.path.exists(self.current_json_file):
-                console.print(f"[red]JSON файл не найден: {self.current_json_file}[/red]")
+                console.print(f"[red]JSON/JSONL файл не найден: {self.current_json_file}[/red]")
                 return False
                 
-            with open(self.current_json_file, 'r') as f:
-                json_data = json.load(f)
+            json_data = []
+            
+            # Проверяем расширение файла для определения формата
+            if self.current_json_file.endswith('.jsonl'):
+                # Читаем JSONL файл построчно
+                with open(self.current_json_file, 'r', encoding='utf-8') as f:
+                    for line_num, line in enumerate(f, 1):
+                        line = line.strip()
+                        if line:  # Пропускаем пустые строки
+                            try:
+                                entry = json.loads(line)
+                                json_data.append(entry)
+                            except json.JSONDecodeError as je:
+                                logging.warning(f"Ignoring invalid JSON on line {line_num} in generate_excel_from_json: {str(je)}")
+                                continue
+            else:
+                # Читаем старый JSON файл (массив объектов)
+                with open(self.current_json_file, 'r', encoding='utf-8') as f:
+                    json_data = json.load(f)
             
             if not json_data:
-                console.print("[yellow]JSON файл пуст, создаем пустой Excel файл[/yellow]")
+                console.print("[yellow]JSONL файл пуст, создаем пустой Excel файл[/yellow]")
                 df = pd.DataFrame(columns=['Box Number', 'Code', 'Timestamp'])
             else:
-                # Конвертируем JSON данные в DataFrame
+                # Конвертируем JSONL данные в DataFrame
                 df = pd.DataFrame(json_data)
             
             # Создаем Excel файл (перезаписываем если существует)

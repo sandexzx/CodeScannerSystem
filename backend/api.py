@@ -6,6 +6,35 @@ import json
 import os
 from datetime import datetime
 import argparse
+import logging
+
+def read_jsonl_file(filepath):
+    """Helper function to read JSONL file and return data as list"""
+    data = []
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            for line_num, line in enumerate(f, 1):
+                line = line.strip()
+                if line:  # Пропускаем пустые строки
+                    try:
+                        entry = json.loads(line)
+                        data.append(entry)
+                    except json.JSONDecodeError as je:
+                        logging.warning(f"Ignoring invalid JSON on line {line_num} in {filepath}: {str(je)}")
+                        continue
+    except Exception as e:
+        logging.error(f"Error reading JSONL file {filepath}: {str(e)}")
+        raise
+    return data
+
+def read_json_or_jsonl_file(filepath):
+    """Helper function to read both JSON and JSONL files"""
+    if filepath.endswith('.jsonl'):
+        return read_jsonl_file(filepath)
+    else:
+        # Legacy JSON file support
+        with open(filepath, 'r', encoding='utf-8') as f:
+            return json.load(f)
 
 app = Flask(__name__)
 
@@ -78,9 +107,8 @@ def continue_session():
         if not handler.current_json_file:
             return jsonify({'error': 'No existing session found'}), 404
         
-        # Быстрое чтение последних данных из JSON файла
-        with open(handler.current_json_file, 'r') as f:
-            data = json.load(f)
+        # Быстрое чтение последних данных из JSON/JSONL файла
+        data = read_json_or_jsonl_file(handler.current_json_file)
             
         # Быстрый подсчет статистики
         scanned_items = len(data)
@@ -110,8 +138,7 @@ def get_history():
         if not json_path or not os.path.exists(json_path):
             return jsonify([])
             
-        with open(json_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+        data = read_json_or_jsonl_file(json_path)
         return jsonify(data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
