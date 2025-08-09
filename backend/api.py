@@ -1,12 +1,14 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from scanner_handler import ScannerHandler
-from config_manager import load_config, update_box_capacity
+from config_manager import load_config, update_box_capacity, save_config
+from email_sender import send_excel_via_smtp
 import json
 import os
 from datetime import datetime
 import argparse
 import logging
+import traceback
 
 def read_jsonl_file(filepath):
     """Helper function to read JSONL file and return data as list"""
@@ -50,6 +52,40 @@ def get_settings():
     try:
         config = load_config()
         return jsonify(config)
+    except Exception as e:
+        # Log full traceback to console for debugging
+        logging.exception("Error in /api/send-excel")
+        return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
+
+@app.route('/api/settings/email', methods=['POST'])
+def save_email_settings():
+    """
+    Save SMTP/email related settings into config.json.
+    Accepts JSON body with any of the keys:
+      smtp_host, smtp_port, smtp_username, smtp_password,
+      smtp_use_tls, mail_from, mail_to
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+
+        config = load_config()
+        allowed_keys = [
+            'smtp_host', 'smtp_port', 'smtp_username', 'smtp_password',
+            'smtp_use_tls', 'mail_from', 'mail_to'
+        ]
+        updated = False
+        for key in allowed_keys:
+            if key in data:
+                config[key] = data[key]
+                updated = True
+
+        if not updated:
+            return jsonify({'error': 'No valid email settings provided'}), 400
+
+        save_config(config)
+        return jsonify({'status': 'success', 'message': 'Email settings saved.'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -167,6 +203,28 @@ def clear_export_folder():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/send-excel', methods=['POST'])
+def send_excel():
+    """
+    Generate Excel if needed and send it via SMTP using settings from config.json.
+    """
+    try:
+        handler = ScannerHandler(start_new_session=False)
+        # Ensure Excel is generated from JSON data
+        success = handler.generate_excel_from_json()
+        if not success:
+            return jsonify({"status": "error", "message": "Не удалось создать Excel файл"}), 500
+
+        cfg = load_config()
+        excel_path = handler.current_excel_file
+        ok, msg = send_excel_via_smtp(excel_path, cfg)
+        if ok:
+            return jsonify({"status": "success", "message": msg})
+        else:
+            return jsonify({"status": "error", "message": msg}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/export-excel', methods=['POST'])
 def export_excel():
     try:
@@ -208,4 +266,4 @@ if __name__ == '__main__':
     parser.add_argument('--host', type=str, default='127.0.0.1', help='Host to run the server on')
     args = parser.parse_args()
     
-    app.run(port=args.port, host=args.host) 
+    app.run(port=args.port, host=args.host)

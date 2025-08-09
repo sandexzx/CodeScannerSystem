@@ -11,7 +11,15 @@ DEFAULT_CONFIG = {
     "sound_box_full": "sounds/box_full.wav",
     "export_file": "export/EXCEL/boxes.xlsx",
     "json_export_dir": "export/JSON",
-    "session_base_name": "session"
+    "session_base_name": "session",
+    # SMTP / email settings for sending exported Excel
+    "smtp_host": "",
+    "smtp_port": 587,
+    "smtp_username": "",
+    "smtp_password": "",
+    "smtp_use_tls": True,
+    "mail_from": "",
+    "mail_to": ""
 }
 
 CONFIG_FILE = "config.json"
@@ -75,4 +83,4 @@ SESSION_BASE_NAME = config["session_base_name"]
 # Create necessary directories
 os.makedirs("sounds", exist_ok=True)
 os.makedirs("export/EXCEL", exist_ok=True)
-os.makedirs("export/JSON", exist_ok=True) 
+os.makedirs("export/JSON", exist_ok=True)

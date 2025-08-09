@@ -9,6 +9,18 @@ export const Settings = () => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [clearError, setClearError] = useState<string | null>(null);
 
+  // Email settings state
+  const [smtpHost, setSmtpHost] = useState("");
+  const [smtpPort, setSmtpPort] = useState("587");
+  const [smtpUsername, setSmtpUsername] = useState("");
+  const [smtpPassword, setSmtpPassword] = useState("");
+  const [smtpUseTls, setSmtpUseTls] = useState(true);
+  const [mailFrom, setMailFrom] = useState("");
+  const [mailTo, setMailTo] = useState("");
+  const [savingEmail, setSavingEmail] = useState(false);
+  const [sendingExcel, setSendingExcel] = useState(false);
+  const [emailMessage, setEmailMessage] = useState<string | null>(null);
+
   // Update local state when boxCapacity changes
   useEffect(() => {
     setCapacity(boxCapacity.toString());
@@ -42,6 +54,81 @@ export const Settings = () => {
       setClearError(null);
     } catch (error: any) {
       setClearError(error.message);
+    }
+  };
+
+  // Load settings (including email settings) on mount
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch('http://localhost:5001/api/settings');
+        if (!res.ok) return;
+        const cfg = await res.json();
+        if (cfg) {
+          setSmtpHost(cfg.smtp_host || "");
+          setSmtpPort(String(cfg.smtp_port || "587"));
+          setSmtpUsername(cfg.smtp_username || "");
+          setSmtpPassword(cfg.smtp_password || "");
+          setSmtpUseTls(cfg.smtp_use_tls === undefined ? true : Boolean(cfg.smtp_use_tls));
+          setMailFrom(cfg.mail_from || "");
+          setMailTo(cfg.mail_to || "");
+        }
+      } catch (e) {
+        // ignore load errors for settings
+      }
+    };
+    load();
+  }, []);
+
+  const saveEmailSettings = async () => {
+    setSavingEmail(true);
+    setEmailMessage(null);
+    try {
+      const payload = {
+        smtp_host: smtpHost,
+        smtp_port: Number(smtpPort || 587),
+        smtp_username: smtpUsername,
+        smtp_password: smtpPassword,
+        smtp_use_tls: smtpUseTls,
+        mail_from: mailFrom,
+        mail_to: mailTo
+      };
+      const res = await fetch('http://localhost:5001/api/settings/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error || json.message || 'Failed to save email settings');
+      }
+      setEmailMessage('Настройки почты сохранены');
+    } catch (err: any) {
+      setEmailMessage(`Ошибка: ${err.message}`);
+    } finally {
+      setSavingEmail(false);
+      setTimeout(() => setEmailMessage(null), 4000);
+    }
+  };
+
+  const sendExcel = async () => {
+    setSendingExcel(true);
+    setEmailMessage(null);
+    try {
+      const res = await fetch('http://localhost:5001/api/send-excel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.message || json.error || 'Failed to send excel');
+      }
+      setEmailMessage('Excel отправлен успешно');
+    } catch (err: any) {
+      setEmailMessage(`Ошибка при отправке: ${err.message}`);
+    } finally {
+      setSendingExcel(false);
+      setTimeout(() => setEmailMessage(null), 6000);
     }
   };
 
@@ -135,6 +222,75 @@ export const Settings = () => {
                   Очистить папки экспорта
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* Email settings and send button */}
+          <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg mt-6">
+            <div className="px-4 py-5 sm:p-6">
+              <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                Настройки почты и отправка Excel
+              </h3>
+              <div className="mt-2 max-w-3xl text-sm text-gray-500 dark:text-gray-400">
+                <p>Заполните настройки SMTP и нажмите «Сохранить настройки почты». После этого можно отправить последний сформированный Excel.</p>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">SMTP Host</label>
+                  <input value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} className="mt-1 block w-full px-3 py-2 rounded-md border bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">SMTP Port</label>
+                  <input value={smtpPort} onChange={(e) => setSmtpPort(e.target.value)} className="mt-1 block w-full px-3 py-2 rounded-md border bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+                  <input value={smtpUsername} onChange={(e) => setSmtpUsername(e.target.value)} className="mt-1 block w-full px-3 py-2 rounded-md border bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                  <input type="password" value={smtpPassword} onChange={(e) => setSmtpPassword(e.target.value)} className="mt-1 block w-full px-3 py-2 rounded-md border bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="inline-flex items-center">
+                    <input type="checkbox" checked={smtpUseTls} onChange={(e) => setSmtpUseTls(e.target.checked)} className="mr-2" />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Use TLS (STARTTLS)</span>
+                  </label>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">From</label>
+                  <input value={mailFrom} onChange={(e) => setMailFrom(e.target.value)} className="mt-1 block w-full px-3 py-2 rounded-md border bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">To</label>
+                  <input value={mailTo} onChange={(e) => setMailTo(e.target.value)} className="mt-1 block w-full px-3 py-2 rounded-md border bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                </div>
+              </div>
+
+              <div className="mt-4 flex space-x-3">
+                <button
+                  type="button"
+                  onClick={saveEmailSettings}
+                  disabled={savingEmail}
+                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
+                >
+                  {savingEmail ? "Сохраняю..." : "Сохранить настройки почты"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={sendExcel}
+                  disabled={sendingExcel || !!session}
+                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                >
+                  {sendingExcel ? "Отправка..." : "Отправить последний Excel"}
+                </button>
+              </div>
+
+              {emailMessage && (
+                <p className="mt-3 text-sm text-gray-700 dark:text-gray-300">{emailMessage}</p>
+              )}
             </div>
           </div>
 
