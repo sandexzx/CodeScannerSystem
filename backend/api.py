@@ -8,6 +8,7 @@ import os
 from datetime import datetime
 import argparse
 import logging
+import subprocess
 import traceback
 
 def read_jsonl_file(filepath):
@@ -242,6 +243,35 @@ def export_excel():
             
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/test-print', methods=['POST'])
+def test_print():
+    try:
+        data = request.get_json(silent=True) or {}
+        printer_name = data.get('printer', 'XP-370B')
+        tspl_name = data.get('tspl_file', 'example.tspl')
+
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+        tspl_path = os.path.join(project_root, tspl_name)
+
+        if not os.path.exists(tspl_path):
+            return jsonify({'error': f'TSPL файл не найден: {tspl_path}'}), 404
+
+        command = ['lpr', '-P', printer_name, '-o', 'raw', tspl_path]
+        subprocess.run(command, check=True)
+
+        return jsonify({
+            'status': 'success',
+            'message': f'Тестовая печать отправлена на принтер {printer_name}'
+        })
+    except FileNotFoundError:
+        return jsonify({'error': 'Команда lpr не найдена в системе'}), 500
+    except subprocess.CalledProcessError as e:
+        return jsonify({'error': f'Ошибка при отправке задания на печать: {str(e)}'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/excel-status', methods=['GET'])
 def excel_status():

@@ -28,6 +28,8 @@ export const Home = () => {
   const [layoutError, setLayoutError] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState<string | null>(null);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [printStatus, setPrintStatus] = useState<{ message: string; isError: boolean } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Focus the input when the component mounts
@@ -98,6 +100,46 @@ export const Home = () => {
     if (!isProcessing) {
       const randomCode = generateRandomCode();
       onNewScan(randomCode);
+    }
+  };
+
+  const handleTestPrint = async () => {
+    if (isPrinting) return;
+
+    setIsPrinting(true);
+    setPrintStatus(null);
+
+    try {
+      const response = await fetch('http://localhost:5001/api/test-print', {
+        method: 'POST'
+      });
+
+      let data: any = null;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        // Игнорируем ошибки парсинга, если сервер не вернул JSON
+      }
+
+      if (!response.ok) {
+        const message = data?.error || data?.message || 'Не удалось отправить задание на печать';
+        throw new Error(message);
+      }
+
+      setPrintStatus({
+        message: data?.message || 'Тестовая печать отправлена на принтер',
+        isError: false
+      });
+    } catch (error: any) {
+      setPrintStatus({
+        message: error?.message || 'Ошибка при отправке задания на печать',
+        isError: true
+      });
+    } finally {
+      setIsPrinting(false);
+      setTimeout(() => {
+        setPrintStatus(null);
+      }, 3000);
     }
   };
 
@@ -203,6 +245,20 @@ export const Home = () => {
               </div>
             )}
 
+            {printStatus && (
+              <div className={`mb-4 p-4 ${printStatus.isError
+                ? 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700'
+                : 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-700'
+              } border rounded-lg shadow-sm w-full`}>
+                <p className={`${printStatus.isError
+                  ? 'text-red-800 dark:text-red-200'
+                  : 'text-green-800 dark:text-green-200'
+                } font-medium`}>
+                  {printStatus.message}
+                </p>
+              </div>
+            )}
+
             <div className="flex flex-col items-center space-y-8 w-full">
               {session && currentCode && (
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 w-full">
@@ -258,14 +314,24 @@ export const Home = () => {
                   Добавить
                 </button>
                 {isAdminMode && (
-                  <button
-                    type="button"
-                    onClick={handleAdminScan}
-                    disabled={isProcessing}
-                    className="ml-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Имитировать сканирование
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleAdminScan}
+                      disabled={isProcessing}
+                      className="ml-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Имитировать сканирование
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleTestPrint}
+                      disabled={isPrinting}
+                      className="ml-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Тестовая печать
+                    </button>
+                  </>
                 )}
               </div>
             </form>

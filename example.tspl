@@ -1,0 +1,27 @@
+SIZE 57 mm,60 mm
+GAP 0,0
+SPEED 3
+DENSITY 10
+DIRECTION 1
+OFFSET 0,0
+CLS
+BOX 10,10,430,460,2
+TEXT 30,25,"0",0,3,3,"TODO SNAPSHOT"
+BAR 30,70,380,2
+TEXT 30,85,"0",0,1,1,"Focus: Sprint 34 wrap-up"
+BAR 30,110,380,2
+BOX 30,125,60,155,2
+TEXT 90,130,"0",0,2,2,"Daily standup"
+BAR 90,160,320,2
+BOX 30,175,60,205,2
+TEXT 90,180,"0",0,2,2,"Ship patch notes"
+BAR 90,210,320,2
+BOX 30,225,60,255,2
+TEXT 90,230,"0",0,2,2,"Regression smoke"
+BAR 30,270,380,2
+TEXT 30,285,"0",0,1,1,"Reminder: ping design crew by 12:00"
+TEXT 30,315,"0",0,1,1,"Backup: draft client demo slides"
+BAR 30,345,380,2
+TEXT 30,360,"0",0,1,1,"Sync board"
+TEXT 30,395,"0",0,1,1,"Mood: keep it light & shipped"
+PRINT 1
