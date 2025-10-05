@@ -5,16 +5,20 @@ if [ -f backend/nohup.out ]; then
     rm backend/nohup.out
 fi
 
-# Проверка и освобождение порта 5001 если он занят
-if lsof -Pi :5001 -sTCP:LISTEN -t >/dev/null ; then
-    echo "Порт 5001 занят, освобождаем..."
-    kill $(lsof -t -i:5001)
-    sleep 2
-fi
+# Проверка и освобождение портов если они заняты
+for port in 8000 5001 5173; do
+    if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null ; then
+        echo "Порт $port занят, освобождаем..."
+        kill $(lsof -t -i:$port) 2>/dev/null || true
+        sleep 1
+    fi
+done
+
+# Активация виртуального окружения из корневой директории
+source .venv/bin/activate
 
 # Запуск backend (FastAPI для сканирования)
 cd backend
-source .venv/bin/activate
 nohup python3 -m uvicorn api_main:app --reload --host 127.0.0.1 --port 8000 &
 FASTAPI_PID=$!
 echo "Backend (FastAPI) запущен с PID $FASTAPI_PID"
@@ -38,6 +42,11 @@ cd ..
 
 # Запуск frontend
 cd frontend
+# Проверка установки зависимостей
+if [ ! -d "node_modules" ]; then
+    echo "Установка зависимостей frontend..."
+    npm install
+fi
 nohup npm run dev &
 FRONTEND_PID=$!
 echo "Frontend (npm run dev) запущен с PID $FRONTEND_PID"

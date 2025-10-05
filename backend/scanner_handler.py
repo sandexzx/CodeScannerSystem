@@ -16,7 +16,11 @@ from rich.prompt import Prompt
 import pandas as pd
 import threading
 from pathlib import Path
-import msvcrt  # For Windows file locking
+try:
+    import msvcrt  # For Windows file locking
+except ImportError:
+    import fcntl  # For Unix file locking
+    msvcrt = None
 
 # Configure logging with Rich
 logging.basicConfig(
@@ -349,7 +353,10 @@ class ScannerHandler:
                 lock_file = f"{self.current_excel_file}.lock"
                 try:
                     with open(lock_file, 'w') as f:
-                        msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+                        if msvcrt:
+                            msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+                        else:
+                            fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
                 except IOError:
                     time.sleep(retry_delay)
                     continue

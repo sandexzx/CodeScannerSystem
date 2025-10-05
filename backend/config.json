@@ -7,5 +7,12 @@
     "export_file": "export/EXCEL/boxes.xlsx",
     "json_export_dir": "export/JSON",
     "session_base_name": "session",
+    "smtp_host": "",
+    "smtp_port": 587,
+    "smtp_username": "",
+    "smtp_password": "",
+    "smtp_use_tls": true,
+    "mail_from": "",
+    "mail_to": "",
     "file_format": "single_line"
 }

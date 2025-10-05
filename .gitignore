@@ -9,3 +9,4 @@ session_*.xlsx
 session_*.json
 node_modules/
 nohup.out
+session_*.jsonl
