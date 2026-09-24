@@ -2,14 +2,15 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from scanner_handler import ScannerHandler
 from config_manager import load_config, update_box_capacity, save_config
+from label_printer import print_label, prepare_label_data
 from email_sender import send_excel_via_smtp
 import json
 import os
 from datetime import datetime
 import argparse
 import logging
-import subprocess
 import traceback
+from pathlib import Path
 
 def read_jsonl_file(filepath):
     """Helper function to read JSONL file and return data as list"""
@@ -248,28 +249,81 @@ def export_excel():
 @app.route('/api/test-print', methods=['POST'])
 def test_print():
     try:
-        data = request.get_json(silent=True) or {}
-        printer_name = data.get('printer', 'XP-370B')
-        tspl_name = data.get('tspl_file', 'example.tspl')
+        payload = request.get_json(silent=True) or {}
+        config = load_config()
 
-        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-        tspl_path = os.path.join(project_root, tspl_name)
+        now = datetime.now()
+        printer_name = payload.get('printer') or config.get('label_printer', 'XP-370B')
+        template_setting = payload.get('template') or config.get('label_template', 'backend/label_template.tspl')
 
-        if not os.path.exists(tspl_path):
-            return jsonify({'error': f'TSPL файл не найден: {tspl_path}'}), 404
+        project_root = Path(__file__).resolve().parent.parent
+        template_path = Path(template_setting)
+        if not template_path.is_absolute():
+            template_path = project_root / template_path
 
-        command = ['lpr', '-P', printer_name, '-o', 'raw', tspl_path]
-        subprocess.run(command, check=True)
+        handler = ScannerHandler(start_new_session=False)
 
-        return jsonify({
-            'status': 'success',
-            'message': f'Тестовая печать отправлена на принтер {printer_name}'
-        })
-    except FileNotFoundError:
-        return jsonify({'error': 'Команда lpr не найдена в системе'}), 500
-    except subprocess.CalledProcessError as e:
-        return jsonify({'error': f'Ошибка при отправке задания на печать: {str(e)}'}), 500
+        title = payload.get('title') or config.get('label_title', 'GROUP LABEL')
+        date_value = payload.get('date') or config.get('label_default_date') or now.strftime('%d.%m.%Y')
+        time_value = payload.get('time') or now.strftime('%H:%M')
+        batch_value = payload.get('batch') or config.get('label_default_batch') or '-'
+        plu_value = payload.get('plu') or config.get('label_default_plu') or '-'
+
+        raw_codes = payload.get('items') or payload.get('codes')
+        if isinstance(raw_codes, str):
+            codes = [raw_codes]
+        elif isinstance(raw_codes, list):
+            codes = [str(item) for item in raw_codes]
+        else:
+            codes = list(handler.current_box)
+
+        box_number_value = payload.get('box_number') or handler.box_number
+
+        count_value = payload.get('count')
+        if count_value is None:
+            count_value = len(codes) or len(handler.current_box) or config.get('box_capacity', 0)
+
+        raw_notes = payload.get('notes')
+        if isinstance(raw_notes, str):
+            notes = [raw_notes]
+        elif isinstance(raw_notes, list):
+            notes = raw_notes
+        else:
+            notes = None
+
+        label_data = prepare_label_data(
+            title=title,
+            date=date_value,
+            time=time_value,
+            batch=batch_value,
+            plu=plu_value,
+            box_number=box_number_value,
+            count=count_value,
+            session=payload.get('session') or (Path(handler.current_json_file).stem if handler.current_json_file else 'session'),
+            codes=codes,
+            notes=notes,
+        )
+
+        # Allow overriding placeholders via `fields` object
+        extra_fields = payload.get('fields', {})
+        if isinstance(extra_fields, dict):
+            for key, value in extra_fields.items():
+                label_data[key.upper()] = value
+
+        success, message, rendered = print_label(printer_name, template_path, label_data)
+
+        return (jsonify({
+            'status': 'success' if success else 'error',
+            'message': message,
+            'data': label_data,
+            'template': str(template_path),
+            'preview': rendered
+        }), 200 if success else 500)
+
+    except FileNotFoundError as exc:
+        return jsonify({'error': str(exc)}), 404
     except Exception as e:
+        logging.exception("Ошибка тестовой печати")
         return jsonify({'error': str(e)}), 500
 
 

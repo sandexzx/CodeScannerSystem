@@ -5,6 +5,7 @@ import re
 import os
 import pygame
 from config_manager import load_config, SCANNER_FILE_PATH, SOUND_SUCCESS, SOUND_ERROR, SOUND_BOX_FULL, EXPORT_FILE, JSON_EXPORT_DIR, SESSION_BASE_NAME
+from label_printer import print_label, prepare_label_data
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -37,6 +38,8 @@ class ScannerHandler:
         self.current_box = []
         self.box_number = 1
         self.processed_codes = set()
+        self.last_label_content = None
+        self.last_label_context = None
         pygame.mixer.init()
         
         # Load sound effects
@@ -258,6 +261,9 @@ class ScannerHandler:
                     f"[bold red]Коробка {self.box_number} заполнена![/bold red]",
                     border_style="red"
                 ))
+                box_snapshot = list(self.current_box)
+                current_box_number = self.box_number
+                self.handle_box_completion(config, box_snapshot, current_box_number)
                 self.create_new_box()
         
         # Запускаем все асинхронные операции в отдельном потоке
@@ -267,6 +273,57 @@ class ScannerHandler:
         element_number = len(self.current_box)
         console.print(f"[green]Код добавлен в коробку {self.box_number} (элемент {element_number}/{box_capacity}): {code}[/green]")
         return code
+
+    def handle_box_completion(self, config, box_snapshot, box_number):
+        """Handle actions that should occur when a box is filled."""
+        if not config.get('auto_print_on_box_close', True):
+            logging.info("Автопечать при закрытии коробки отключена в конфиге")
+            return
+
+        printer_name = config.get('label_printer', 'XP-370B')
+        template_setting = config.get('label_template', 'backend/label_template.tspl')
+
+        project_root = Path(__file__).resolve().parent.parent
+        template_path = Path(template_setting)
+        if not template_path.is_absolute():
+            template_path = project_root / template_path
+
+        now = datetime.now()
+        date_value = config.get('label_default_date') or now.strftime('%d.%m.%Y')
+        time_value = now.strftime('%H:%M')
+
+        label_title = config.get('label_title', 'GROUP LABEL')
+
+        label_data = prepare_label_data(
+            title=label_title,
+            date=date_value,
+            time=time_value,
+            batch=config.get('label_default_batch') or '-',
+            plu=config.get('label_default_plu') or '-',
+            box_number=box_number,
+            count=len(box_snapshot),
+            session=Path(self.current_json_file).stem,
+            codes=box_snapshot,
+        )
+
+        try:
+            success, message, rendered = print_label(printer_name, template_path, label_data)
+            self.last_label_content = rendered
+            self.last_label_context = {
+                'printer': printer_name,
+                'template': str(template_path),
+                'data': label_data,
+                'timestamp': now.isoformat()
+            }
+
+            if success:
+                logging.info("Этикетка для коробки %s отправлена на принтер %s", box_number, printer_name)
+            else:
+                logging.error("Не удалось отправить этикетку на печать: %s", message)
+        except FileNotFoundError as exc:
+            logging.error("Файл шаблона этикетки не найден: %s", exc)
+        except Exception as exc:
+            logging.error("Не удалось напечатать этикетку: %s", exc)
 
     def save_json_data(self, code):
         """Save single code data to JSONL file with append-only writes"""

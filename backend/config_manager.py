@@ -12,6 +12,13 @@ DEFAULT_CONFIG = {
     "export_file": "export/EXCEL/boxes.xlsx",
     "json_export_dir": "export/JSON",
     "session_base_name": "session",
+    "label_printer": "XP-370B",
+    "label_template": "backend/label_template.tspl",
+    "label_title": "GROUP LABEL",
+    "auto_print_on_box_close": True,
+    "label_default_date": "",
+    "label_default_batch": "",
+    "label_default_plu": "",
     # SMTP / email settings for sending exported Excel
     "smtp_host": "",
     "smtp_port": 587,
@@ -79,6 +86,12 @@ SOUND_BOX_FULL = config["sound_box_full"]
 EXPORT_FILE = config["export_file"]
 JSON_EXPORT_DIR = config["json_export_dir"]
 SESSION_BASE_NAME = config["session_base_name"]
+LABEL_PRINTER = config.get("label_printer", "XP-370B")
+LABEL_TEMPLATE = config.get("label_template", "backend/label_template.tspl")
+AUTO_PRINT_ON_BOX_CLOSE = config.get("auto_print_on_box_close", True)
+LABEL_DEFAULT_DATE = config.get("label_default_date", "")
+LABEL_DEFAULT_BATCH = config.get("label_default_batch", "")
+LABEL_DEFAULT_PLU = config.get("label_default_plu", "")
 
 # Create necessary directories
 os.makedirs("sounds", exist_ok=True)

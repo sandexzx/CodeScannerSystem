@@ -127,12 +127,12 @@ export const Home = () => {
       }
 
       setPrintStatus({
-        message: data?.message || 'Тестовая печать отправлена на принтер',
+        message: data?.message || 'Этикетка отправлена на принтер',
         isError: false
       });
     } catch (error: any) {
       setPrintStatus({
-        message: error?.message || 'Ошибка при отправке задания на печать',
+        message: error?.message || 'Не удалось отправить этикетку на печать',
         isError: true
       });
     } finally {
@@ -329,7 +329,7 @@ export const Home = () => {
                       disabled={isPrinting}
                       className="ml-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Тестовая печать
+                      {isPrinting ? 'Печать...' : 'Печать сейчас'}
                     </button>
                   </>
                 )}
